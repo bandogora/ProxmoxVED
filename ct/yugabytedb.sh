@@ -58,8 +58,6 @@ function update_script() {
 
     msg_info "Updating Dependencies"
     $STD dnf -y upgrade
-    alternatives --install /usr/bin/python python /usr/bin/python3.11 99
-    alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 99
     $STD python3 -m pip install --upgrade pip
     $STD python3 -m pip install --upgrade lxml
     $STD python3 -m pip install --upgrade s3cmd
@@ -97,6 +95,7 @@ function update_script() {
     rm -rf ~/.cache
     $STD dnf autoremove -y
     $STD dnf clean all
+    rm -rf /usr/share/python3-wheels/*
     rm -rf /var/cache/yum /var/cache/dnf
     msg_ok "Cleanup Completed"
 
