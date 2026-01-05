@@ -37,12 +37,14 @@ $STD dnf install -y \
   redhat-rpm-config \
   rsync \
   procps \
+  python3 \
   python3-devel \
   python3-pip \
   sysstat \
   tcpdump \
   which \
-  binutils
+  binutils \
+  tar
 msg_ok "Installed Dependencies"
 
 msg_info "Setting ENV variables"
@@ -92,13 +94,13 @@ read -r VERSION RELEASE < <(
   curl -fsSL https://github.com/yugabyte/yugabyte-db/raw/refs/heads/master/docs/data/currentVersions.json |
     jq -r ".dbVersions[] | select(.series == \"${YB_SERIES}\") | [.version, .appVersion] | @tsv"
 )
-curl -fsSL "https://software.yugabyte.com/releases/${VERSION}/yugabyte-${RELEASE}-linux-$(uname -m).tar.gz"
+curl -OfsSL "https://software.yugabyte.com/releases/${VERSION}/yugabyte-${RELEASE}-linux-$(uname -m).tar.gz"
 
-tar -xvf "yugabyte-${RELEASE}-linux-$(uname -m).tar.gz" --strip 1
+tar -xf "yugabyte-${RELEASE}-linux-$(uname -m).tar.gz" --strip 1
 rm -rf "yugabyte-${RELEASE}-linux-$(uname -m).tar.gz"
 # Run post install
 ./bin/post_install.sh
-tar -xvf share/ybc-*.tar.gz
+tar -xf share/ybc-*.tar.gz
 rm -rf ybc-*/conf/
 
 # Strip unneeded symbols from object files in $YB_HOME

@@ -67,13 +67,14 @@ function update_script() {
     # Execute Update
     msg_info "Updating $APP to v${RELEASE}"
 
-    curl -fsSL "https://software.yugabyte.com/releases/${VERSION}/yugabyte-${RELEASE}-linux-$(uname -m).tar.gz"
+    # Get latest version and build number for our series
+    curl -OfsSL "https://software.yugabyte.com/releases/${VERSION}/yugabyte-${RELEASE}-linux-$(uname -m).tar.gz"
 
-    tar -xvf "/tmp/yugabyte*$(uname -m)*.tar.gz" --strip 1
-    rm -rf /tmp/yuabyte*
+    tar -xf "yugabyte-${RELEASE}-linux-$(uname -m).tar.gz" --strip 1
+    rm -rf "yugabyte-${RELEASE}-linux-$(uname -m).tar.gz"
     # Run post install
     ./bin/post_install.sh
-    tar -xvf share/ybc-*.tar.gz
+    tar -xf share/ybc-*.tar.gz
     rm -rf ybc-*/conf/
     msg_ok "Updated $APP to v${RELEASE}"
 
