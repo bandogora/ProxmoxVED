@@ -19,8 +19,8 @@ var_os="${var_os:-almalinux}"
 var_version="${var_version:-10}"
 var_unprivileged="${var_unprivileged:-1}"
 
-YB_SERIES=v2025.2
-YB_HOME=/home/yugabyte
+export YB_SERIES="v2025.2"
+export YB_HOME="/home/yugabyte"
 
 header_info "$APP"
 variables
@@ -47,7 +47,7 @@ function update_script() {
   if [[ "${RELEASE}" != "$(sed -rn 's/.*"version_number"[[:space:]]*:[[:space:]]*"([^"]*)".*"build_number"[[:space:]]*:[[:space:]]*"([^"]*)".*/\1-\2/p' ${YB_HOME}/version_metadata.json)" ]]; then
     # Stopping Services
     msg_info "Stopping $APP"
-    systemctl stop ${NSAPP}.service
+    systemctl stop "${NSAPP}".service
     pkill yb-master
     msg_ok "Stopped $APP"
 
@@ -81,7 +81,7 @@ function update_script() {
 
     # Starting Services
     msg_info "Starting $APP"
-    systemctl start ${NSAPP}.service
+    systemctl start "${NSAPP}".service
     # Verify service is running
     if systemctl is-active --quiet "${NSAPP}".service; then
       msg_ok "Service running successfully"
@@ -95,8 +95,8 @@ function update_script() {
     # Cleaning up
     msg_info "Cleaning Up"
     rm -rf ~/.cache
-    $STD dnf autoremove -y 2>/dev/null
-    $STD dnf clean all 2>/dev/null
+    $STD dnf autoremove -y
+    $STD dnf clean all
     rm -rf /var/cache/yum /var/cache/dnf
     msg_ok "Cleanup Completed"
 

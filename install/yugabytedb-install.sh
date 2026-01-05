@@ -16,7 +16,7 @@ update_os
 
 # Installing Dependencies with the 3 core dependencies (curl;sudo;mc)
 msg_info "Installing Dependencies"
-$STD dnf install --disableplugin=subscription-manager -y \
+dnf install -y \
   curl \
   sudo \
   mc \
@@ -45,223 +45,222 @@ $STD dnf install --disableplugin=subscription-manager -y \
   strip
 msg_ok "Installed Dependencies"
 
-msg_info "Setting ENV variables"
-YB_MANAGED_DEVOPS_USE_PYTHON3=1
-YB_DEVOPS_USE_PYTHON3=1
-BOTO_PATH=/home/yugabyte/.boto/config
-AZCOPY_JOB_PLAN_LOCATION=/tmp/azcopy/jobs-plan
-AZCOPY_LOG_LOCATION=/tmp/azcopy/logs
-DATA_DIR=/mnt/disk0
+# msg_info "Setting ENV variables"
+# YB_MANAGED_DEVOPS_USE_PYTHON3=1
+# YB_DEVOPS_USE_PYTHON3=1
+# BOTO_PATH=/home/yugabyte/.boto/config
+# AZCOPY_JOB_PLAN_LOCATION=/tmp/azcopy/jobs-plan
+# AZCOPY_LOG_LOCATION=/tmp/azcopy/logs
+# DATA_DIR=/mnt/disk0
 
-keys=(
-  YB_SERIES
-  YB_HOME
-  YB_MANAGED_DEVOPS_USE_PYTHON3
-  YB_DEVOPS_USE_PYTHON3
-  BOTO_PATH
-  AZCOPY_JOB_PLAN_LOCATION
-  AZCOPY_LOG_LOCATION
-)
-for k in "${keys[@]}"; do
-  val=$(printf '%s' "${!k}" | sed 's/"/\"/g')
-  sudo sh -c "printf '%s\n' ${k}=${val} >> /etc/environment"
-done
-msg_ok "Set ENV variables"
+# keys=(
+#   YB_SERIES
+#   YB_HOME
+#   YB_MANAGED_DEVOPS_USE_PYTHON3
+#   YB_DEVOPS_USE_PYTHON3
+#   BOTO_PATH
+#   AZCOPY_JOB_PLAN_LOCATION
+#   AZCOPY_LOG_LOCATION
+# )
+# for k in "${keys[@]}"; do
+#   val=$(printf '%s' "${!k}" | sed 's/"/\"/g')
+#   sudo sh -c "printf '%s\n' ${k}=${val} >> /etc/environment"
+# done
+# msg_ok "Set ENV variables"
 
-msg_info "Installing Python3 Dependencies"
-alternatives --install /usr/bin/python python /usr/bin/python3.11 99
-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 99
-$STD python3 -m pip install --upgrade pip
-$STD python3 -m pip install --upgrade lxml
-$STD python3 -m pip install --upgrade s3cmd
-$STD python3 -m pip install --upgrade psutil
-msg_ok "Installed Python3 Dependencies"
+# msg_info "Installing Python3 Dependencies"
+# alternatives --install /usr/bin/python python /usr/bin/python3.11 99
+# alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 99
+# $STD python3 -m pip install --upgrade pip
+# $STD python3 -m pip install --upgrade lxml
+# $STD python3 -m pip install --upgrade s3cmd
+# $STD python3 -m pip install --upgrade psutil
+# msg_ok "Installed Python3 Dependencies"
 
-msg_info "Creating yugabyte user"
-useradd --home-dir $YB_HOME \
-  --uid 10001 \
-  --shell /sbin/nologin \
-  --no-create-home \
-  --no-user-group yugabyte
-msg_ok "Created yugabyte user"
+# msg_info "Creating yugabyte user"
+# useradd --home-dir "$YB_HOME" \
+#   --uid 10001 \
+#   --shell /sbin/nologin \
+#   --no-create-home \
+#   --no-user-group yugabyte
+# msg_ok "Created yugabyte user"
 
-msg_info "Setup ${APP}"
-# Create YB_HOME and set as working dir
-mkdir $YB_HOME && cd $YB_HOME || exit
+# msg_info "Setup ${APP}"
+# # Create YB_HOME and set as working dir
+# mkdir "$YB_HOME" && cd "$YB_HOME" || exit
 
-# Get latest version and build number for our series
-read -r VERSION RELEASE < <(
-  curl -fsSL https://github.com/yugabyte/yugabyte-db/raw/refs/heads/master/docs/data/currentVersions.json |
-    jq -r ".dbVersions[] | select(.series == \"${YB_SERIES}\") | [.version, .appVersion] | @tsv"
-)
-curl -fsSL "https://software.yugabyte.com/releases/${VERSION}/yugabyte-${RELEASE}-linux-$(uname -m).tar.gz"
+# # Get latest version and build number for our series
+# read -r VERSION RELEASE < <(
+#   curl -fsSL https://github.com/yugabyte/yugabyte-db/raw/refs/heads/master/docs/data/currentVersions.json |
+#     jq -r ".dbVersions[] | select(.series == \"${YB_SERIES}\") | [.version, .appVersion] | @tsv"
+# )
+# curl -fsSL "https://software.yugabyte.com/releases/${VERSION}/yugabyte-${RELEASE}-linux-$(uname -m).tar.gz"
 
-tar -xvf "yugabyte-${RELEASE}-linux-$(uname -m).tar.gz" --strip 1
-rm -rf "yugabyte-${RELEASE}-linux-$(uname -m).tar.gz"
-# Run post install
-./bin/post_install.sh
-tar -xvf share/ybc-*.tar.gz
-rm -rf ybc-*/conf/
+# tar -xvf "yugabyte-${RELEASE}-linux-$(uname -m).tar.gz" --strip 1
+# rm -rf "yugabyte-${RELEASE}-linux-$(uname -m).tar.gz"
+# # Run post install
+# ./bin/post_install.sh
+# tar -xvf share/ybc-*.tar.gz
+# rm -rf ybc-*/conf/
 
-# Strip unneeded symbols from object files in $YB_HOME
-for a in $(find . -exec file {} \; | grep -i elf | cut -f1 -d:); do
-  strip --strip-unneeded "$a" || true
-done
+# # Strip unneeded symbols from object files in $YB_HOME
+# for a in $(find . -exec file {} \; | grep -i elf | cut -f1 -d:); do
+#   strip --strip-unneeded "$a" || true
+# done
 
-# Add yugabyte supported languages to localedef
-languages=("en_US" "de_DE" "es_ES" "fr_FR" "it_IT" "ja_JP"
-  "ko_KR" "pl_PL" "ru_RU" "sv_SE" "tr_TR" "zh_CN")
-for lang in "${languages[@]}"; do
-  localedef --quiet --force --inputfile="${lang}" --charmap=UTF-8 "${lang}.UTF-8"
-done
+# # Add yugabyte supported languages to localedef
+# languages=("en_US" "de_DE" "es_ES" "fr_FR" "it_IT" "ja_JP"
+#   "ko_KR" "pl_PL" "ru_RU" "sv_SE" "tr_TR" "zh_CN")
+# for lang in "${languages[@]}"; do
+#   localedef --quiet --force --inputfile="${lang}" --charmap=UTF-8 "${lang}.UTF-8"
+# done
 
-# Link yugabyte bins to /usr/local/bin/
-for a in ysqlsh ycqlsh yugabyted yb-admin yb-tsi-cli; do
-  ln -s $YB_HOME/bin/$a /usr/local/bin/$a
-done
+# # Link yugabyte bins to /usr/local/bin/
+# for a in ysqlsh ycqlsh yugabyted yb-admin yb-tsi-cli; do
+#   ln -s "$YB_HOME"/bin/$a /usr/local/bin/$a
+# done
 
-# In the normal EE flows, we expect /home/yugabyte/{master,tserver} to exist and have both links
-# to all the components in the unpacked tar.gz, as well as an extra link to the log path for the
-# respective server
-shopt -s extglob
-mkdir $YB_HOME/{master,tserver}
-# Link all YB pieces
-for dir in !(^ybc-*); do ln -s $YB_HOME/"$dir" $YB_HOME/master/"$dir"; done
-for dir in !(^ybc-*); do ln -s $YB_HOME/"$dir" $YB_HOME/tserver/"$dir"; done
-# Link the logs
-ln -s $DATA_DIR/yb-data/master/logs $YB_HOME/master/logs
-ln -s $DATA_DIR/yb-data/tserver/logs $YB_HOME/tserver/logs
+# # In the normal EE flows, we expect /home/yugabyte/{master,tserver} to exist and have both links
+# # to all the components in the unpacked tar.gz, as well as an extra link to the log path for the
+# # respective server
+# shopt -s extglob
+# mkdir "$YB_HOME"/{master,tserver}
+# # Link all YB pieces
+# for dir in !(^ybc-*); do ln -s "$YB_HOME"/"$dir" "$YB_HOME"/master/"$dir"; done
+# for dir in !(^ybc-*); do ln -s "$YB_HOME"/"$dir" "$YB_HOME"/tserver/"$dir"; done
+# # Link the logs
+# ln -s $DATA_DIR/yb-data/master/logs "$YB_HOME"/master/logs
+# ln -s $DATA_DIR/yb-data/tserver/logs "$YB_HOME"/tserver/logs
 
-mkdir $YB_HOME/controller
-# Find ybc-* directory
-YBC_DIR=$(find "$YB_HOME" -maxdepth 1 -type d -name 'ybc-*')
-# Link bin directory
-ln -s "${YBC_DIR}"/bin $YB_HOME/controller/bin
-# Link the logs
-ln -s $DATA_DIR/ybc-data/controller/logs $YB_HOME/controller/logs
-msg_ok "Setup ${APP}"
+# mkdir "$YB_HOME"/controller
+# # Find ybc-* directory
+# YBC_DIR=$(find "$YB_HOME" -maxdepth 1 -type d -name 'ybc-*')
+# # Link bin directory
+# ln -s "${YBC_DIR}"/bin "$YB_HOME"/controller/bin
+# # Link the logs
+# ln -s $DATA_DIR/ybc-data/controller/logs "$YB_HOME"/controller/logs
+# msg_ok "Setup ${APP}"
 
-msg_info "Copying licenses"
-ghr_url=https://raw.githubusercontent.com/yugabyte/yugabyte-db/master
-mkdir /licenses
-curl ${ghr_url}/LICENSE.md -o /licenses/LICENSE.md
-curl ${ghr_url}/licenses/APACHE-LICENSE-2.0.txt -o /licenses/APACHE-LICENSE-2.0.txt
-curl ${ghr_url}/licenses/POLYFORM-FREE-TRIAL-LICENSE-1.0.0.txt \
-  -o /licenses/POLYFORM-FREE-TRIAL-LICENSE-1.0.0.txt
-msg_ok "Copied licenses"
+# msg_info "Copying licenses"
+# ghr_url=https://raw.githubusercontent.com/yugabyte/yugabyte-db/master
+# mkdir /licenses
+# curl ${ghr_url}/LICENSE.md -o /licenses/LICENSE.md
+# curl ${ghr_url}/licenses/APACHE-LICENSE-2.0.txt -o /licenses/APACHE-LICENSE-2.0.txt
+# curl ${ghr_url}/licenses/POLYFORM-FREE-TRIAL-LICENSE-1.0.0.txt \
+#   -o /licenses/POLYFORM-FREE-TRIAL-LICENSE-1.0.0.txt
+# msg_ok "Copied licenses"
 
-# Install azcopy to support Microsoft Azure integration
-msg_info "Installing azcopy"
-curl -fsSL -O https://packages.microsoft.com/keys/microsoft.asc
-rpm --import microsoft.asc
-curl -fsSL -O https://packages.microsoft.com/config/alma/10/packages-microsoft-prod.rpm
-rpm --quiet -K packages-microsoft-prod.rpm
-$STD dnf upgrade -y
-$STD dnf install -y azcopy
-rm -f microsoft.asc packages-microsoft-prod.rpm
-mkdir -m 777 /tmp/azcopy
-msg_ok "Installed azcopy"
+# # Install azcopy to support Microsoft Azure integration
+# msg_info "Installing azcopy"
+# curl -fsSL -O https://packages.microsoft.com/keys/microsoft.asc
+# rpm --import microsoft.asc
+# curl -fsSL -O https://packages.microsoft.com/config/alma/10/packages-microsoft-prod.rpm
+# rpm --quiet -K packages-microsoft-prod.rpm
+# $STD dnf upgrade -y
+# $STD dnf install -y azcopy
+# rm -f microsoft.asc packages-microsoft-prod.rpm
+# mkdir -m 777 /tmp/azcopy
+# msg_ok "Installed azcopy"
 
-# Install gsutil to support Google Cloud Platform wintegration
-msg_info "Installing gsutil"
-sudo tee -a /etc/yum.repos.d/google-cloud-sdk.repo <<EOM
-[google-cloud-cli]
-name=Google Cloud CLI
-baseurl=https://packages.cloud.google.com/yum/repos/cloud-sdk-el9-x86_64
-enabled=1
-gpgcheck=1
-repo_gpgcheck=0
-gpgkey=https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
-EOM
-$STD dnf upgrade -y
-$STD dnf install -y libxcrypt-compat.x86_64
-$STD dnf install -y google-cloud-cli
+# # Install gsutil to support Google Cloud Platform wintegration
+# msg_info "Installing gsutil"
+# sudo tee -a /etc/yum.repos.d/google-cloud-sdk.repo <<EOM
+# [google-cloud-cli]
+# name=Google Cloud CLI
+# baseurl=https://packages.cloud.google.com/yum/repos/cloud-sdk-el9-x86_64
+# enabled=1
+# gpgcheck=1
+# repo_gpgcheck=0
+# gpgkey=https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+# EOM
+# $STD dnf upgrade -y
+# $STD dnf install -y libxcrypt-compat.x86_64 google-cloud-cli
 
-# Configure gsutil
-mkdir $YB_HOME/.boto
-echo -e "[GSUtil]\nstate_dir=/tmp/gsutil" >$YB_HOME/.boto/config
-mkdir -m 777 /tmp/gsutil
-msg_ok "Installed gsutil"
+# # Configure gsutil
+# mkdir "$YB_HOME"/.boto
+# echo -e "[GSUtil]\nstate_dir=/tmp/gsutil" >"$YB_HOME"/.boto/config
+# mkdir -m 777 /tmp/gsutil
+# msg_ok "Installed gsutil"
 
-msg_info "Setting permissions"
-mkdir -m 777 /tmp/yb-port-locks
-mkdir -m 777 /tmp/yb-controller-tmp
-chown -R yugabyte $YB_HOME
-chown -R yugabyte $DATA_DIR
-msg_ok "Permissions set"
+# msg_info "Setting permissions"
+# mkdir -m 777 /tmp/yb-port-locks
+# mkdir -m 777 /tmp/yb-controller-tmp
+# chown -R yugabyte "$YB_HOME"
+# chown -R yugabyte "$DATA_DIR"
+# msg_ok "Permissions set"
 
-# --advertise_address=$(get_current_ip) \
+# # --advertise_address=$(get_current_ip) \
 
-tserver_flags="enable_ysql_conn_mgr=true,durable_wal_write=true"
+# tserver_flags="enable_ysql_conn_mgr=true,durable_wal_write=true"
 
-# "none, zone, region, cloud"
-fault_tolerance="zone"
-cloud_location="cloudprovider.region.zone"
-backup_daemon=true
+# # "none, zone, region, cloud"
+# fault_tolerance="zone"
+# cloud_location="cloudprovider.region.zone"
+# backup_daemon=true
 
-# Creating Service
-msg_info "Creating Service"
-cat <<EOF >/etc/systemd/system/"${NSAPP}".service
-[Unit]
-Description=${APPLICATION} Service
-Wants=network-online.target
-After=network-online.target
+# # Creating Service
+# msg_info "Creating Service"
+# cat <<EOF >/etc/systemd/system/"${NSAPP}".service
+# [Unit]
+# Description=${APPLICATION} Service
+# Wants=network-online.target
+# After=network-online.target
 
-[Service]
-Type=forking
-RestartForceExitStatus=SIGPIPE
-StartLimitInterval=0
-ExecStart=/bin/bash -c '/usr/local/bin/yugabyted start --secure \
---backup_daemon=$backup_daemon \
---fault_tolerance=$fault_tolerance \
---advertise_address=$IP \
---tserver_flags="$tserver_flags" \
---data_dir=$DATA_DIR \
---cloud_location=$cloud_location \
---callhome=false'
+# [Service]
+# Type=forking
+# RestartForceExitStatus=SIGPIPE
+# StartLimitInterval=0
+# ExecStart=/bin/bash -c '/usr/local/bin/yugabyted start --secure \
+# --backup_daemon=$backup_daemon \
+# --fault_tolerance=$fault_tolerance \
+# --advertise_address=$IP \
+# --tserver_flags="$tserver_flags" \
+# --data_dir=$DATA_DIR \
+# --cloud_location=$cloud_location \
+# --callhome=false'
 
-Environment="YB_HOME=$YB_HOME"
-Environment="YB_MANAGED_DEVOPS_USE_PYTHON3=$YB_MANAGED_DEVOPS_USE_PYTHON3"
-Environment="YB_DEVOPS_USE_PYTHON3=$YB_DEVOPS_USE_PYTHON3"
-Environment="BOTO_PATH=$BOTO_PATH"
-Environment="AZCOPY_JOB_PLAN_LOCATION=$AZCOPY_JOB_PLAN_LOCATION"
-Environment="AZCOPY_LOG_LOCATION=$AZCOPY_LOG_LOCATION"
-WorkingDirectory=$YB_HOME
-TimeoutStartSec=30
-LimitCORE=infinity
-LimitNOFILE=1048576
-LimitNPROC=12000
-RestartSec=5
-PermissionsStartOnly=True
-User=yugabyte
-TimeoutStopSec=300
-Restart=always
+# Environment="YB_HOME=$YB_HOME"
+# Environment="YB_MANAGED_DEVOPS_USE_PYTHON3=$YB_MANAGED_DEVOPS_USE_PYTHON3"
+# Environment="YB_DEVOPS_USE_PYTHON3=$YB_DEVOPS_USE_PYTHON3"
+# Environment="BOTO_PATH=$BOTO_PATH"
+# Environment="AZCOPY_JOB_PLAN_LOCATION=$AZCOPY_JOB_PLAN_LOCATION"
+# Environment="AZCOPY_LOG_LOCATION=$AZCOPY_LOG_LOCATION"
+# WorkingDirectory=$YB_HOME
+# TimeoutStartSec=30
+# LimitCORE=infinity
+# LimitNOFILE=1048576
+# LimitNPROC=12000
+# RestartSec=5
+# PermissionsStartOnly=True
+# User=yugabyte
+# TimeoutStopSec=300
+# Restart=always
 
-[Install]
-WantedBy=multi-user.target
-EOF
+# [Install]
+# WantedBy=multi-user.target
+# EOF
 
-# Enable systemd service
-systemctl enable -q --now "${NSAPP}".service
+# # Enable systemd service
+# systemctl enable -q --now "${NSAPP}".service
 
-# Verify service is running
-if systemctl is-active --quiet "${NSAPP}".service; then
-  msg_ok "Service running successfully"
-else
-  msg_error "Service failed to start"
-  journalctl -u "${NSAPP}".service -n 20
-  exit 1
-fi
-msg_ok "Created Service"
+# # Verify service is running
+# if systemctl is-active --quiet "${NSAPP}".service; then
+#   msg_ok "Service running successfully"
+# else
+#   msg_error "Service failed to start"
+#   journalctl -u "${NSAPP}".service -n 20
+#   exit 1
+# fi
+# msg_ok "Created Service"
 
-motd_ssh
-customize
+# motd_ssh
+# customize
 
-# Cleanup
-msg_info "Cleaning up"
-rm -rf /usr/share/python3-wheels/pip-9.0.3-py2.py3-none-any.whl
-rm -rf ~/.cache
-$STD dnf autoremove -y 2>/dev/null
-$STD dnf clean all 2>/dev/null
-rm -rf /var/cache/yum /var/cache/dnf
-msg_ok "Cleaned"
+# # Cleanup
+# msg_info "Cleaning up"
+# rm -rf /usr/share/python3-wheels/pip-9.0.3-py2.py3-none-any.whl
+# rm -rf ~/.cache
+# $STD dnf autoremove -y
+# $STD dnf clean all
+# rm -rf /var/cache/yum /var/cache/dnf
+# msg_ok "Cleaned"
