@@ -16,7 +16,6 @@ update_os
 
 # Installing Dependencies with the 3 core dependencies (curl;sudo;mc)
 msg_info "Installing Dependencies"
-set -ex
 $STD dnf install --disableplugin=subscription-manager -y \
   curl \
   sudo \
@@ -155,7 +154,7 @@ msg_ok "Copied licenses"
 msg_info "Installing azcopy"
 curl -fsSL -O https://packages.microsoft.com/keys/microsoft.asc
 rpm --import microsoft.asc
-curl -fsSL -O https://packages.microsoft.com/config/alma/9/packages-microsoft-prod.rpm
+curl -fsSL -O https://packages.microsoft.com/config/alma/10/packages-microsoft-prod.rpm
 rpm --quiet -K packages-microsoft-prod.rpm
 $STD dnf upgrade -y
 $STD dnf install -y azcopy

@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-source <(curl -fsSL https://git.community-scripts.org/community-scripts/ProxmoxVED/raw/branch/main/misc/build.func)
-# source <(curl -fsSL https://git.community-scripts.org/community-scripts/ProxmoxVED/raw/branch/main/misc/github.func)
-# Copyright (c) 2021-2026 tteck
+source <(curl -fsSL https://raw.githubusercontent.com/bandogora/ProxmoxVED/yugabytedb/misc/build.func)
+# source <(curl -fsSL https://raw.githubusercontent.com/bandogora/ProxmoxVED/yugabytedb/misc/github.func)
+# Copyright (c) 2021-2025 tteck
 # Author: tteck (tteckster)
-# License: MIT | https://github.com/community-scripts/ProxmoxVED/raw/main/LICENSE
+# License: MIT | https://github.com/bandogora/ProxmoxVED/raw/main/LICENSE
 # Source: https://ubuntu.com/
 
 APP="Ubuntu"
@@ -21,24 +21,23 @@ color
 catch_errors
 
 function update_script() {
-    header_info
-    check_container_storage
-    check_container_resources
-    if [[ ! -d /var ]]; then
-        msg_error "No ${APP} Installation Found!"
-        exit
-    fi
-    msg_info "Updating Ubuntu LXC"
-    $STD apt-get update
-    $STD apt-get -y upgrade
-    msg_ok "Updated Ubuntu LXC"
-    msg_ok "Updated successfully!"
+  header_info
+  check_container_storage
+  check_container_resources
+  if [[ ! -d /var ]]; then
+    msg_error "No ${APP} Installation Found!"
     exit
+  fi
+  msg_info "Updating ${APP} LXC"
+  $STD apt-get update
+  $STD apt-get -y upgrade
+  msg_ok "Updated ${APP} LXC"
+  exit
 }
 
 start
 build_container
 description
 
-msg_ok "Completed successfully!\n"
+msg_ok "Completed Successfully!\n"
 echo -e "${CREATING}${GN}${APP} setup has been successfully initialized!${CL}"

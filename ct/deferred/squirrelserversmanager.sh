@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-source <(curl -fsSL https://git.community-scripts.org/community-scripts/ProxmoxVED/raw/branch/main/misc/build.func)
-# Copyright (c) 2021-2026 community-scripts ORG
+source <(curl -fsSL https://raw.githubusercontent.com/bandogora/ProxmoxVED/yugabytedb/misc/build.func)
+# Copyright (c) 2021-2025 community-scripts ORG
 # Author: MickLesk (Canbiz)
 # License: MIT | https://github.com/community-scripts/ProxmoxVE/raw/main/LICENSE
 # Source:
@@ -19,30 +19,30 @@ color
 catch_errors
 
 function update_script() {
-    header_info
-    if [[ ! -d /opt/squirrelserversmanager ]]; then
-        msg_error "No ${APP} Installation Found!"
-        exit
-    fi
-    msg_info "Updating ${APP}"
-    pm2 stop "squirrelserversmanager-frontend"
-    pm2 stop "squirrelserversmanager-backend"
-    cd /opt/squirrelserversmanager
-    git pull
-    cd /opt/squirrelserversmanager/shared-lib
-    npm ci &>/dev/null
-    npm run build
-    cd /opt/squirrelserversmanager/server
-    npm ci &>/dev/null
-    npm run build
-    cd /opt/squirrelserversmanager/client
-    npm ci &>/dev/null
-    npm run build
-    pm2 flush
-    pm2 restart "squirrelserversmanager-frontend"
-    pm2 restart "squirrelserversmanager-backend"
-    msg_ok "Successfully Updated ${APP}"
+  header_info
+  if [[ ! -d /opt/squirrelserversmanager ]]; then
+    msg_error "No ${APP} Installation Found!"
     exit
+  fi
+  msg_info "Updating ${APP}"
+  pm2 stop "squirrelserversmanager-frontend"
+  pm2 stop "squirrelserversmanager-backend"
+  cd /opt/squirrelserversmanager
+  git pull
+  cd /opt/squirrelserversmanager/shared-lib
+  npm ci &>/dev/null
+  npm run build
+  cd /opt/squirrelserversmanager/server
+  npm ci &>/dev/null
+  npm run build
+  cd /opt/squirrelserversmanager/client
+  npm ci &>/dev/null
+  npm run build
+  pm2 flush
+  pm2 restart "squirrelserversmanager-frontend"
+  pm2 restart "squirrelserversmanager-backend"
+  msg_ok "Successfully Updated ${APP}"
+  exit
 }
 
 start
@@ -52,6 +52,6 @@ msg_info "Setting Container to Normal Resources"
 pct set $CTID -memory 1024
 pct set $CTID -cores 1
 msg_ok "Set Container to Normal Resources"
-msg_ok "Completed successfully!\n"
+msg_ok "Completed Successfully!\n"
 echo -e "${APP} should be reachable by going to the following URL.
          ${BL}http://${IP}:80${CL} \n"

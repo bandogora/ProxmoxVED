@@ -144,11 +144,11 @@ msg_ok "Completed successfully!\n"
 #!/usr/bin/env bash
 # Copyright (c) 2021-2026 community-scripts ORG
 # Author: YourUsername
-# License: MIT | https://github.com/community-scripts/ProxmoxVED/raw/main/LICENSE
+# License: MIT | https://github.com/bandogora/ProxmoxVED/raw/main/LICENSE
 # Source: https://github.com/example/project
 
 # Import main orchestrator
-source <(curl -fsSL https://git.community-scripts.org/community-scripts/ProxmoxVED/raw/branch/main/misc/build.func)
+source <(curl -fsSL https://raw.githubusercontent.com/bandogora/ProxmoxVED/yugabytedb/misc/build.func)
 ```
 
 > **⚠️ IMPORTANT**: Before opening a PR, change URL to `community-scripts` repo!
@@ -363,7 +363,7 @@ function health_check() {
 
 ```bash
 #!/usr/bin/env bash
-source <(curl -fsSL https://git.community-scripts.org/community-scripts/ProxmoxVED/raw/branch/main/misc/build.func)
+source <(curl -fsSL https://raw.githubusercontent.com/bandogora/ProxmoxVED/yugabytedb/misc/build.func)
 
 APP="Homarr"
 var_tags="dashboard;homepage"

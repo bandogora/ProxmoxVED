@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-source <(curl -fsSL https://raw.githubusercontent.com/community-scripts/ProxmoxVED/main/misc/build.func)
-# Copyright (c) 2021-2026 community-scripts ORG
+source <(curl -fsSL https://raw.githubusercontent.com/bandogora/ProxmoxVED/yugabytedb/misc/build.func)
+# Copyright (c) 2021-2025 community-scripts ORG
 # Author: MickLesk (CanbiZ)
-# License: MIT | https://github.com/community-scripts/ProxmoxVED/raw/main/LICENSE
+# License: MIT | https://github.com/bandogora/ProxmoxVED/raw/main/LICENSE
 # Source: https://www.mailpiler.org/
 
 APP="Piler"
@@ -67,11 +67,11 @@ function update_script() {
     chown piler:piler /etc/piler/piler.conf
     msg_ok "Restored Configuration"
 
-    msg_info "Starting Services"
+    msg_info "Starting Piler Services"
     $STD systemctl start manticore
     $STD systemctl start piler
-    msg_ok "Started Services"
-    msg_ok "Updated successfully!"
+    msg_ok "Started Piler Services"
+    msg_ok "Updated Successfully to v${RELEASE_NEW}"
   else
     msg_ok "No update available (current: v${RELEASE_OLD})"
   fi
@@ -82,7 +82,7 @@ start
 build_container
 description
 
-msg_ok "Completed successfully!\n"
+msg_ok "Completed Successfully!\n"
 echo -e "${CREATING}${GN}${APP} setup has been successfully initialized!${CL}"
 echo -e "${INFO}${YW} Access it using the following URL:${CL}"
 echo -e "${TAB}${GATEWAY}${BGN}http://${IP}${CL}"

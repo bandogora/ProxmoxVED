@@ -14,10 +14,10 @@ if [[ "${CREATE_LXC_VERBOSE:-no}" == "yes" ]]; then set -x; fi
 # ------------------------------------------------------------------------------
 if command -v curl >/dev/null 2>&1; then
   # Achtung: bewusst exakt diese URL-Struktur
-  source <(curl -fsSL https://git.community-scripts.org/community-scripts/ProxmoxVED/raw/branch/main/misc/core.func)
+  source <(curl -fsSL https://raw.githubusercontent.com/bandogora/ProxmoxVED/yugabytedb/misc/core.func)
   load_functions
 elif command -v wget >/dev/null 2>&1; then
-  source <(wget -qO- https://git.community-scripts.org/community-scripts/ProxmoxVED/raw/branch/main/misc/core.func)
+  source <(wget -qO- https://raw.githubusercontent.com/bandogora/ProxmoxVED/yugabytedb/misc/core.func)
   load_functions
 fi
 

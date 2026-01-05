@@ -6,8 +6,8 @@
 if ! command -v curl >/dev/null 2>&1; then
   apk update && apk add curl >/dev/null 2>&1
 fi
-source <(curl -fsSL https://git.community-scripts.org/community-scripts/ProxmoxVED/raw/branch/main/misc/core.func)
-source <(curl -fsSL https://git.community-scripts.org/community-scripts/ProxmoxVED/raw/branch/main/misc/error_handler.func)
+source <(curl -fsSL https://raw.githubusercontent.com/bandogora/ProxmoxVED/yugabytedb/misc/core.func)
+source <(curl -fsSL https://raw.githubusercontent.com/bandogora/ProxmoxVED/yugabytedb/misc/error_handler.func)
 load_functions
 catch_errors
 
@@ -119,7 +119,7 @@ network_check() {
 update_os() {
   msg_info "Updating Container OS"
   $STD apk -U upgrade
-  source <(curl -fsSL https://git.community-scripts.org/community-scripts/ProxmoxVED/raw/branch/main/misc/alpine-tools.func)
+  source <(curl -fsSL https://raw.githubusercontent.com/bandogora/ProxmoxVED/yugabytedb/misc/alpine-tools.func)
   msg_ok "Updated Container OS"
 }
 
@@ -143,7 +143,7 @@ motd_ssh() {
   echo -e "echo -e \"${YW} OS: ${GN}${OS_NAME} - Version: ${OS_VERSION}${CL}\"" >>"$PROFILE_FILE"
   echo -e "echo -e \"${YW} Hostname: ${GN}\$(hostname)${CL}\"" >>"$PROFILE_FILE"
   echo -e "echo -e \"${YW} IP Address: ${GN}${IP}${CL}\"" >>"$PROFILE_FILE"
-  echo -e "echo -e \"${YW} Repository: ${GN}https://github.com/community-scripts/ProxmoxVED${CL}\"" >>"$PROFILE_FILE"
+  echo -e "echo -e \"${YW} Repository: ${GN}https://github.com/bandogora/ProxmoxVED${CL}\"" >>"$PROFILE_FILE"
   echo "echo \"\"" >>"$PROFILE_FILE"
 
   if [[ "${SSH_ROOT}" == "yes" ]]; then
@@ -185,6 +185,6 @@ EOF
     msg_ok "Customized Container"
   fi
 
-  echo "bash -c \"\$(curl -fsSL https://github.com/community-scripts/ProxmoxVED/raw/main/ct/${app}.sh)\"" >/usr/bin/update
+  echo "bash -c \"\$(curl -fsSL https://github.com/bandogora/ProxmoxVED/raw/main/ct/${app}.sh)\"" >/usr/bin/update
   chmod +x /usr/bin/update
 }

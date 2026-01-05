@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-source <(curl -fsSL https://raw.githubusercontent.com/community-scripts/ProxmoxVED/main/misc/build.func)
-# Copyright (c) 2021-2026 community-scripts ORG
+source <(curl -fsSL https://raw.githubusercontent.com/bandogora/ProxmoxVED/yugabytedb/misc/build.func)
+# Copyright (c) 2021-2025 community-scripts ORG
 # Author: pshankinclarke (lazarillo)
 # License: MIT | https://github.com/community-scripts/ProxmoxVE/raw/main/LICENSE
 # Source: https://valkey.io/
@@ -42,7 +42,6 @@ function update_script() {
       msg_info "Updating Valkey"
       apk update && apk upgrade valkey
       rc-service valkey restart
-      msg_ok "Updated Valkey"
       msg_ok "Updated successfully!"
       exit
       ;;
@@ -68,6 +67,6 @@ start
 build_container
 description
 
-msg_ok "Completed successfully!\n"
+msg_ok "Completed Successfully!\n"
 echo -e "${APP} should be reachable on port 6379.
          ${BL}valkey-cli -h ${IP} -p 6379${CL} \n"

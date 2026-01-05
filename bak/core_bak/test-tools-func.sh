@@ -7,7 +7,7 @@
 # Can be run standalone in any Debian-based system
 #
 # Usage:
-#   bash <(curl -fsSL https://git.community-scripts.org/community-scripts/ProxmoxVED/raw/branch/main/misc/test-tools-func.sh)
+#   bash <(curl -fsSL https://raw.githubusercontent.com/bandogora/ProxmoxVED/yugabytedb/misc/test-tools-func.sh)
 # ==============================================================================
 
 set -uo pipefail
@@ -35,15 +35,15 @@ echo -e "Log file: ${TEST_LOG}\n"
 
 # Source tools.func from repository
 echo -e "${BLUE}► Sourcing tools.func from repository...${NC}"
-if ! source <(curl -fsSL https://git.community-scripts.org/community-scripts/ProxmoxVED/raw/branch/main/misc/tools.func); then
+if ! source <(curl -fsSL https://raw.githubusercontent.com/bandogora/ProxmoxVED/yugabytedb/misc/tools.func); then
   echo -e "${RED}✖ Failed to source tools.func${NC}"
   exit 1
 fi
 echo -e "${GREEN}✔ tools.func loaded${NC}\n"
 
 # Source core functions if available
-if curl -fsSL https://git.community-scripts.org/community-scripts/ProxmoxVED/raw/branch/main/misc/core.func &>/dev/null; then
-  source <(curl -fsSL https://git.community-scripts.org/community-scripts/ProxmoxVED/raw/branch/main/misc/core.func) || true
+if curl -fsSL https://raw.githubusercontent.com/bandogora/ProxmoxVED/yugabytedb/misc/core.func &>/dev/null; then
+  source <(curl -fsSL https://raw.githubusercontent.com/bandogora/ProxmoxVED/yugabytedb/misc/core.func) || true
 fi
 
 # Override STD to show all output for debugging

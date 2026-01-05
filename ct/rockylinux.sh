@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-source <(curl -fsSL https://git.community-scripts.org/community-scripts/ProxmoxVED/raw/branch/main/misc/build.func)
-# Copyright (c) 2021-2026 community-scripts ORG
+source <(curl -fsSL https://raw.githubusercontent.com/bandogora/ProxmoxVED/yugabytedb/misc/build.func)
+# Copyright (c) 2021-2025 community-scripts ORG
 # Author: MickLesk (CanbiZ)
-# License: MIT | https://github.com/community-scripts/ProxmoxVED/raw/main/LICENSE
+# License: MIT | https://github.com/bandogora/ProxmoxVED/raw/main/LICENSE
 # Source: https://rockylinux.org/
 
 APP="Rocky Linux"
@@ -27,10 +27,9 @@ function update_script() {
     msg_error "No ${APP} Installation Found!"
     exit
   fi
-  msg_info "Updating Rocky Linux LXC"
+  msg_info "Updating $APP LXC"
   $STD dnf -y upgrade
-  msg_ok "Updated Rocky Linux LXC"
-  msg_ok "Completed successfully!"
+  msg_ok "Updated $APP LXC"
   exit
 }
 
@@ -38,5 +37,5 @@ start
 build_container
 description
 
-msg_ok "Completed successfully!\n"
+msg_ok "Completed Successfully!"
 msg_custom "🚀" "${GN}" "${APP} setup has been successfully initialized!"

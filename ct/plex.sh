@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-source <(curl -fsSL https://raw.githubusercontent.com/community-scripts/ProxmoxVED/main/misc/build.func)
-# Copyright (c) 2021-2026 tteck
+source <(curl -fsSL https://raw.githubusercontent.com/bandogora/ProxmoxVED/yugabytedb/misc/build.func)
+# Copyright (c) 2021-2025 tteck
 # Author: tteck (tteckster)
 # License: MIT | https://github.com/community-scripts/ProxmoxVE/raw/main/LICENSE
 # Source: https://www.plex.tv/
@@ -34,10 +34,10 @@ function update_script() {
     "2" "Install plexupdate" OFF \
     3>&1 1>&2 2>&3)
   if [ "$UPD" == "1" ]; then
-    msg_info "Updating Plex LXC"
+    msg_info "Updating ${APP} LXC"
     $STD apt update
     $STD apt -y upgrade
-    msg_ok "Updated Plex LXC"
+    msg_ok "Updated ${APP} LXC"
     msg_ok "Updated successfully!"
     exit
   fi
@@ -53,7 +53,7 @@ start
 build_container
 description
 
-msg_ok "Completed successfully!\n"
+msg_ok "Completed Successfully!\n"
 echo -e "${CREATING}${GN}${APP} setup has been successfully initialized!${CL}"
 echo -e "${INFO}${YW} Access it using the following URL:${CL}"
 echo -e "${TAB}${GATEWAY}${BGN}http://${IP}:32400/web${CL}"
