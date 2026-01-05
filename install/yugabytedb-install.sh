@@ -96,11 +96,11 @@ read -r VERSION RELEASE < <(
 )
 curl -OfsSL "https://software.yugabyte.com/releases/${VERSION}/yugabyte-${RELEASE}-linux-$(uname -m).tar.gz"
 
-tar -xf "yugabyte-${RELEASE}-linux-$(uname -m).tar.gz" --strip 1
+tar -xzf "yugabyte-${RELEASE}-linux-$(uname -m).tar.gz" --strip 1
 rm -rf "yugabyte-${RELEASE}-linux-$(uname -m).tar.gz"
 # Run post install
 ./bin/post_install.sh
-tar -xf share/ybc-*.tar.gz
+tar -xzf share/ybc-*.tar.gz
 rm -rf ybc-*/conf/
 
 # Strip unneeded symbols from object files in $YB_HOME
@@ -152,13 +152,15 @@ msg_ok "Copied licenses"
 
 # Install azcopy to support Microsoft Azure integration
 msg_info "Installing azcopy"
-curl -fsSL -O https://packages.microsoft.com/keys/microsoft.asc
-rpm --import microsoft.asc
+curl -fsSL -O https://packages.microsoft.com/keys/microsoft-2025.asc
+rpm --import microsoft-2025.asc
 curl -fsSL -O https://packages.microsoft.com/config/alma/10/packages-microsoft-prod.rpm
-rpm --quiet -K packages-microsoft-prod.rpm
+if rpm --quiet -K packages-microsoft-prod.rpm; then
+  msg_error "digests SIGNATURES NOT OK"
+fi
 $STD dnf upgrade -y
 $STD dnf install -y azcopy
-rm -f microsoft.asc packages-microsoft-prod.rpm
+rm -f microsoft-2025.asc packages-microsoft-prod.rpm
 mkdir -m 777 /tmp/azcopy
 msg_ok "Installed azcopy"
 
