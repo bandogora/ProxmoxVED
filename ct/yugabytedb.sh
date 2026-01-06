@@ -14,7 +14,7 @@ APP="YugabyteDB"
 var_tags="${var_tags:-database}"
 var_cpu="${var_cpu:-2}"
 var_ram="${var_ram:-2048}"
-var_disk="${var_disk:-4}"
+var_disk="${var_disk:-10}"
 var_os="${var_os:-almalinux}"
 var_version="${var_version:-9}"
 var_unprivileged="${var_unprivileged:-1}"
@@ -47,13 +47,13 @@ function update_script() {
   if [[ "${RELEASE}" != "$(sed -rn 's/.*"version_number"[[:space:]]*:[[:space:]]*"([^"]*)".*"build_number"[[:space:]]*:[[:space:]]*"([^"]*)".*/\1-\2/p' ${YB_HOME}/version_metadata.json)" ]]; then
     # Stopping Services
     msg_info "Stopping $APP"
-    systemctl stop "${NSAPP}".service
+    systemctl stop "${app}".service
     pkill yb-master
     msg_ok "Stopped $APP"
 
     # Creating Backup
     # msg_info "Creating Backup"
-    # tar -czf "/opt/${NSAPP}_backup_$(date +%F).tar.gz" [IMPORTANT_PATHS]
+    # tar -czf "/opt/${app}_backup_$(date +%F).tar.gz" [IMPORTANT_PATHS]
     # msg_ok "Backup Created"
 
     msg_info "Updating Dependencies"
@@ -82,13 +82,13 @@ function update_script() {
 
     # Starting Services
     msg_info "Starting $APP"
-    systemctl start "${NSAPP}".service
+    systemctl start "${app}".service
     # Verify service is running
-    if systemctl is-active --quiet "${NSAPP}".service; then
+    if systemctl is-active --quiet "${app}".service; then
       msg_ok "Service running successfully"
     else
       msg_error "Service failed to start"
-      journalctl -u "${NSAPP}".service -n 20
+      journalctl -u "${app}".service -n 20
       exit 1
     fi
     msg_ok "Started $APP"

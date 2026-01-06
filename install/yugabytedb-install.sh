@@ -222,7 +222,7 @@ backup_daemon=true
 
 # Creating Service
 msg_info "Creating Service"
-cat <<EOF >/etc/systemd/system/"${NSAPP}".service
+cat <<EOF >/etc/systemd/system/"${app}.service"
 [Unit]
 Description=${APPLICATION} Service
 Wants=network-online.target
@@ -235,7 +235,7 @@ StartLimitInterval=0
 ExecStart=/bin/bash -c '/usr/local/bin/yugabyted start --secure \
 --backup_daemon=$backup_daemon \
 --fault_tolerance=$fault_tolerance \
---advertise_address=$IP \
+--advertise_address=$(hostname -I | awk '{print $1}') \
 --tserver_flags="$tserver_flags" \
 --data_dir=$DATA_DIR \
 --cloud_location=$cloud_location \
@@ -263,14 +263,14 @@ WantedBy=multi-user.target
 EOF
 
 # Enable systemd service
-systemctl enable -q --now "${NSAPP}".service
+systemctl enable -q --now "${app}".service
 
 # Verify service is running
-if systemctl is-active --quiet "${NSAPP}".service; then
+if systemctl is-active --quiet "${app}".service; then
   msg_ok "Service running successfully"
 else
   msg_error "Service failed to start"
-  journalctl -u "${NSAPP}".service -n 20
+  journalctl -u "${app}".service -n 20
   exit 1
 fi
 msg_ok "Created Service"
