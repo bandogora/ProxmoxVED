@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Copyright (c) 2021-2025 bandogora
+# Copyright (c) 2021-2026 bandogora
 # Author: bandogora
 # License: MIT | https://github.com/community-scripts/ProxmoxVED/raw/main/LICENSE
 # Source: https://www.yugabyte.com/yugabytedb/
@@ -16,7 +16,7 @@ var_cpu="${var_cpu:-2}"
 var_ram="${var_ram:-2048}"
 var_disk="${var_disk:-4}"
 var_os="${var_os:-almalinux}"
-var_version="${var_version:-10}"
+var_version="${var_version:-9}"
 var_unprivileged="${var_unprivileged:-1}"
 
 export YB_SERIES="v2025.2"
@@ -58,10 +58,12 @@ function update_script() {
 
     msg_info "Updating Dependencies"
     $STD dnf -y upgrade
-    $STD python3 -m pip install --upgrade pip
-    $STD python3 -m pip install --upgrade lxml
-    $STD python3 -m pip install --upgrade s3cmd
-    $STD python3 -m pip install --upgrade psutil
+    alternatives --install /usr/bin/python python /usr/bin/python3.12 99
+    alternatives --install /usr/bin/python3 python3 /usr/bin/python3.12 99
+    $STD python3 -m pip install --upgrade pip --root-user-action=ignore
+    $STD python3 -m pip install --upgrade lxml --root-user-action=ignore
+    $STD python3 -m pip install --upgrade s3cmd --root-user-action=ignore
+    $STD python3 -m pip install --upgrade psutil --root-user-action=ignore
     msg_ok "Updated Dependencies"
 
     # Execute Update

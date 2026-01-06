@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Copyright (c) 2021-2025 bandogora
+# Copyright (c) 2021-2026 bandogora
 # Author: bandogora
 # License: MIT | https://github.com/community-scripts/ProxmoxVED/raw/main/LICENSE
 # Source: https://www.yugabyte.com/yugabytedb/
@@ -37,9 +37,9 @@ $STD dnf install -y \
   redhat-rpm-config \
   rsync \
   procps \
-  python3 \
-  python3-devel \
-  python3-pip \
+  python3.12 \
+  python3.12-devel \
+  python3.12-pip \
   sysstat \
   tcpdump \
   which \
@@ -71,10 +71,14 @@ done
 msg_ok "Set ENV variables"
 
 msg_info "Installing Python3 Dependencies"
-$STD python3 -m pip install --upgrade pip
-$STD python3 -m pip install --upgrade lxml
-$STD python3 -m pip install --upgrade s3cmd
-$STD python3 -m pip install --upgrade psutil
+# Make sure python 3.12 is used when calling python or python3
+alternatives --install /usr/bin/python python /usr/bin/python3.12 99
+alternatives --install /usr/bin/python3 python3 /usr/bin/python3.12 99
+# Install required packages globally
+$STD python3 -m pip install --upgrade pip --root-user-action=ignore
+$STD python3 -m pip install --upgrade lxml --root-user-action=ignore
+$STD python3 -m pip install --upgrade s3cmd --root-user-action=ignore
+$STD python3 -m pip install --upgrade psutil --root-user-action=ignore
 msg_ok "Installed Python3 Dependencies"
 
 msg_info "Creating yugabyte user"
@@ -152,15 +156,18 @@ msg_ok "Copied licenses"
 
 # Install azcopy to support Microsoft Azure integration
 msg_info "Installing azcopy"
-curl -fsSL -O https://packages.microsoft.com/keys/microsoft-2025.asc
-rpm --import microsoft-2025.asc
-curl -fsSL -O https://packages.microsoft.com/config/alma/10/packages-microsoft-prod.rpm
+curl -fsSL -O https://packages.microsoft.com/keys/microsoft.asc
+rpm --import microsoft.asc
+curl -fsSL -O https://packages.microsoft.com/config/alma/9/packages-microsoft-prod.rpm
+# Make sure packages-microsoft-prod.rpm is properly signed before install
 if rpm --quiet -K packages-microsoft-prod.rpm; then
+  rpm -i packages-microsoft-prod.rpm
+else
   msg_error "digests SIGNATURES NOT OK"
 fi
 $STD dnf upgrade -y
 $STD dnf install -y azcopy
-rm -f microsoft-2025.asc packages-microsoft-prod.rpm
+rm -f microsoft.asc packages-microsoft-prod.rpm
 mkdir -m 777 /tmp/azcopy
 msg_ok "Installed azcopy"
 
