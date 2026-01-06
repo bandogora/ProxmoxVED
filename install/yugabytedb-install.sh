@@ -220,6 +220,36 @@ fault_tolerance="zone"
 cloud_location="cloudprovider.region.zone"
 backup_daemon=true
 
+msg_info "Setting ulimits"
+ulimit -c unlimited
+ulimit -d unlimited
+ulimit -f unlimited
+ulimit -i 119934
+ulimit -l 64
+ulimit -m unlimited
+ulimit -n 1048576
+ulimit -q 819200
+ulimit -s 8192
+ulimit -t unlimited
+ulimit -u 12000
+ulimit -x unlimited
+
+cat <<EOF >/etc/security/limits.conf
+*                -       core            unlimited
+*                -       data            unlimited
+*                -       fsize           unlimited
+*                -       sigpending      119934
+*                -       memlock         64
+*                -       rss             unlimited
+*                -       nofile          1048576
+*                -       msgqueue        819200
+*                -       stack           8192
+*                -       cpu             unlimited
+*                -       nproc           12000
+*                -       locks           unlimited
+EOF
+msg_info "Set ulimits"
+
 # Creating Service
 msg_info "Creating Service"
 cat <<EOF >/etc/systemd/system/"${app}.service"
