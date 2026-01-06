@@ -50,7 +50,7 @@ msg_ok "Installed Dependencies"
 msg_info "Setting ENV variables"
 YB_MANAGED_DEVOPS_USE_PYTHON3=1
 YB_DEVOPS_USE_PYTHON3=1
-BOTO_PATH=/home/yugabyte/.boto/config
+BOTO_PATH=$YB_HOME/.boto/config
 AZCOPY_JOB_PLAN_LOCATION=/tmp/azcopy/jobs-plan
 AZCOPY_LOG_LOCATION=/tmp/azcopy/logs
 DATA_DIR=/mnt/disk0
@@ -90,8 +90,11 @@ useradd --home-dir "$YB_HOME" \
 msg_ok "Created yugabyte user"
 
 msg_info "Setup ${APP}"
-# Create YB_HOME and set as working dir
-mkdir "$YB_HOME" && cd "$YB_HOME" || exit
+# Create data dirs from ENV vars
+mkdir -p "$YB_HOME" "$DATA_DIR"
+
+# Set working dir
+cd "$YB_HOME" || exit
 
 # Get latest version and build number for our series
 read -r VERSION RELEASE < <(
@@ -200,7 +203,17 @@ msg_ok "Permissions set"
 
 # --advertise_address=$(get_current_ip) \
 
-tserver_flags="enable_ysql_conn_mgr=true,durable_wal_write=true"
+tserver_flags=""
+enable_ysql_conn_mgr=true
+durable_wal_write=true
+
+if [ "$enable_ysql_conn_mgr" = true ]; then
+  tserver_flags+="enable_ysql_conn_mgr=true,"
+fi
+
+if [ "$enable_ysql_conn_mgr" = true ]; then
+  tserver_flags+="durable_wal_write=true,"
+fi
 
 # "none, zone, region, cloud"
 fault_tolerance="zone"
