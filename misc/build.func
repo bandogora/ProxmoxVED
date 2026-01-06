@@ -3022,6 +3022,11 @@ EOF
   configure_gpu_passthrough
   configure_additional_devices
 
+  # Append any extra lxc config options to file if they exist
+  if [ -n "${var_extra_lxc_config[*]}" ]; then
+    printf "%s\n" "${var_extra_lxc_config[@]}" >>"$LXC_CONFIG"
+  fi
+
   # ============================================================================
   # START CONTAINER AND INSTALL USERLAND
   # ============================================================================

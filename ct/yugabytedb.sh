@@ -18,6 +18,10 @@ var_disk="${var_disk:-10}"
 var_os="${var_os:-almalinux}"
 var_version="${var_version:-9}"
 var_unprivileged="${var_unprivileged:-1}"
+var_extra_lxc_config=(
+  "lxc.prlimit.nofile = 1048576"
+  "lxc.prlimit.sigpending = 119934"
+)
 
 export YB_SERIES="v2025.2"
 export YB_HOME="/home/yugabyte"
