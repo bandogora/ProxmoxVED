@@ -84,13 +84,13 @@ msg_ok "Installed Python3 Dependencies"
 msg_info "Creating yugabyte user"
 useradd --home-dir "$YB_HOME" \
   --uid 10001 \
-  --no-create-home \
-  --shell /sbin/nologin
+  --shell /sbin/nologin \
+  yugabyte
 msg_ok "Created yugabyte user"
 
 msg_info "Setup ${APP}"
 # Create data dirs from ENV vars
-mkdir -p "$YB_HOME" "$DATA_DIR"
+mkdir -p "$DATA_DIR"
 
 # Set working dir
 cd "$YB_HOME" || exit
