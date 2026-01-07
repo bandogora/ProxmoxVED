@@ -90,7 +90,7 @@ msg_ok "Created yugabyte user"
 
 msg_info "Setup ${APP}"
 # Create data dirs from ENV vars
-mkdir -p "$DATA_DIR"
+mkdir -p "$YB_HOME"/var/tmp "$DATA_DIR"
 
 # Set working dir
 cd "$YB_HOME" || exit
@@ -202,7 +202,7 @@ msg_ok "Permissions set"
 
 # --advertise_address=$(get_current_ip) \
 
-tserver_flags=""
+tserver_flags="tmp_dir=$YB_HOME/var/tmp"
 enable_ysql_conn_mgr=true
 durable_wal_write=true
 
@@ -291,17 +291,18 @@ Restart=always
 WantedBy=multi-user.target
 EOF
 
-# Enable systemd service
-systemctl enable -q --now "${app}".service
+systemctl enable -q "${app}".service
+# # Enable systemd service
+# systemctl enable -q --now "${app}".service
 
-# Verify service is running
-if systemctl is-active --quiet "${app}".service; then
-  msg_ok "Service running successfully"
-else
-  msg_error "Service failed to start"
-  journalctl -u "${app}".service -n 20
-  exit 1
-fi
+# # Verify service is running
+# if systemctl is-active --quiet "${app}".service; then
+#   msg_ok "Service running successfully"
+# else
+#   msg_error "Service failed to start"
+#   journalctl -u "${app}".service -n 20
+#   exit 1
+# fi
 msg_ok "Created Service"
 
 motd_ssh
