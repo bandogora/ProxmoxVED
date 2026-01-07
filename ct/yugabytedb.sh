@@ -18,13 +18,13 @@ var_disk="${var_disk:-10}"
 var_os="${var_os:-almalinux}"
 var_version="${var_version:-9}"
 var_unprivileged="${var_unprivileged:-1}"
-var_extra_lxc_config=(
-  "lxc.prlimit.nofile = 1048576"
-  "lxc.prlimit.sigpending = 119934"
-)
 
 export YB_SERIES="v2025.2"
 export YB_HOME="/home/yugabyte"
+var_lxc_prlimit_config=(
+  "lxc.prlimit.nofile = 1048576"
+  "lxc.prlimit.sigpending = 119934"
+)
 
 header_info "$APP"
 variables
@@ -85,17 +85,16 @@ function update_script() {
     msg_ok "Updated $APP to v${RELEASE}"
 
     # Starting Services
-    msg_info "Starting $APP"
+    msg_info "Starting ${app}.service"
     systemctl start "${app}".service
     # Verify service is running
     if systemctl is-active --quiet "${app}".service; then
-      msg_ok "Service running successfully"
+      msg_ok "Started ${app}.service"
     else
       msg_error "Service failed to start"
       journalctl -u "${app}".service -n 20
       exit 1
     fi
-    msg_ok "Started $APP"
 
     # Cleaning up
     msg_info "Cleaning Up"
@@ -115,6 +114,75 @@ function update_script() {
 
 start
 build_container
+
+msg_info "Stopping $CTID to apply config changes"
+# Stop the container so ulimit changes can take effect
+pct stop "$CTID"
+for i in {1..10}; do
+  if pct status "$CTID" | grep -q "status: stopped"; then
+    msg_ok "Stopped LXC Container $CTID"
+    break
+  fi
+  sleep 1
+  if [ "$i" -eq 10 ]; then
+    msg_error "LXC Container $CTID did not reach stopped state"
+    exit 1
+  fi
+done
+
+# Create a backup of the config file in the same directory and name it ${CTID}.config.backup,
+# then update the original if any legacy keys are used.
+msg_info "Creating backup of /etc/pve/lxc/${CTID}.conf"
+lxc-update-config -c "/etc/pve/lxc/${CTID}.conf"
+if [ -f "/etc/pve/lxc/${CTID}.config.backup" ]; then
+  msg_ok "Created backup at /etc/pve/lxc/${CTID}.config.backup"
+else
+  msg_error "Failed to create backup /etc/pve/lxc/${CTID}.config.backup"
+  exit 1
+fi
+
+msg_info "Updating $CTID config to match YugabyteDB guidelines"
+# Append prlimit lxc config options to file conf file
+if [ -n "${var_lxc_prlimit_config[*]}" ]; then
+  printf "%s\n" "${var_lxc_prlimit_config[@]}" >>"/etc/pve/lxc/${CTID}.conf"
+fi
+
+# Appends ,mountoptions=noatime to rootfs config if it's not already present
+sed -i '/^rootfs: local-lvm:vm-102-disk-0,size=128G/{/mountoptions=noatime/! s/$/,mountoptions=noatime/}' /etc/pve/lxc/"${CTID}".conf
+
+# Set swap to 0
+sed -i -E 's/^(swap:[[:space:]]*)[0-9]+/\10/' /etc/pve/lxc/"${CTID}".conf
+msg_ok "Updated $CTID config"
+
+# Start the container
+msg_info "Starting $CTID"
+pct start "$CTID"
+for i in {1..10}; do
+  if pct status "$CTID" | grep -q "status: running"; then
+    msg_ok "Started LXC Container $CTID"
+    break
+  fi
+  sleep 1
+  if [ "$i" -eq 10 ]; then
+    msg_error "LXC Container $CTID did not reach running state"
+    exit 1
+  fi
+done
+
+# # Start and enable the service
+# msg_info "Starting ${app}.service"
+# pct exec "$CTID" -- systemctl enable -q --now "${app}".service
+# # Verify service is running
+# pct exec "$CTID" -- /bin/sh -c "
+# if systemctl is-active --quiet ${app}.service; then
+#   msg_ok \"Started ${app}.service\"
+# else
+#   msg_error "Service failed to start"
+#   journalctl -u ${app}.service -n 20
+#   exit 1
+# fi
+# "
+
 description
 
 msg_ok "Completed Successfully!\n"

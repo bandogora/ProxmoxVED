@@ -48,26 +48,37 @@ $STD dnf install -y \
 msg_ok "Installed Dependencies"
 
 msg_info "Setting ENV variables"
+DATA_DIR=/mnt/disk0
 YB_MANAGED_DEVOPS_USE_PYTHON3=1
 YB_DEVOPS_USE_PYTHON3=1
 BOTO_PATH=$YB_HOME/.boto/config
 AZCOPY_JOB_PLAN_LOCATION=/tmp/azcopy/jobs-plan
 AZCOPY_LOG_LOCATION=/tmp/azcopy/logs
-DATA_DIR=/mnt/disk0
 
-keys=(
-  YB_SERIES
-  YB_HOME
-  YB_MANAGED_DEVOPS_USE_PYTHON3
-  YB_DEVOPS_USE_PYTHON3
-  BOTO_PATH
-  AZCOPY_JOB_PLAN_LOCATION
-  AZCOPY_LOG_LOCATION
-)
-for k in "${keys[@]}"; do
-  val=$(printf '%s' "${!k}" | sed 's/"/\"/g')
-  sudo sh -c "printf '%s\n' ${k}=${val} >> /etc/environment"
-done
+# keys=(
+#   YB_SERIES
+#   YB_HOME
+#   YB_MANAGED_DEVOPS_USE_PYTHON3
+#   YB_DEVOPS_USE_PYTHON3
+#   BOTO_PATH
+#   AZCOPY_JOB_PLAN_LOCATION
+#   AZCOPY_LOG_LOCATION
+# )
+# for k in "${keys[@]}"; do
+#   val=$(printf '%s' "${!k}" | sed 's/"/\"/g')
+#   sudo sh -c "printf '%s\n' ${k}=${val} >> /etc/environment"
+# done
+
+cat >/etc/environment <<EOF
+YB_SERIES=$YB_SERIES
+YB_HOME=$YB_HOME
+DATA_DIR=$DATA_DIR
+YB_MANAGED_DEVOPS_USE_PYTHON3=$YB_MANAGED_DEVOPS_USE_PYTHON3
+YB_DEVOPS_USE_PYTHON3=$YB_DEVOPS_USE_PYTHON3
+BOTO_PATH=$BOTO_PATH
+AZCOPY_JOB_PLAN_LOCATION=$AZCOPY_JOB_PLAN_LOCATION
+AZCOPY_LOG_LOCATION=$AZCOPY_LOG_LOCATION
+EOF
 msg_ok "Set ENV variables"
 
 msg_info "Installing Python3 Dependencies"
@@ -84,7 +95,6 @@ msg_ok "Installed Python3 Dependencies"
 msg_info "Creating yugabyte user"
 useradd --home-dir "$YB_HOME" \
   --uid 10001 \
-  --shell /sbin/nologin \
   yugabyte
 msg_ok "Created yugabyte user"
 
@@ -114,12 +124,12 @@ for a in $(find . -exec file {} \; | grep -i elf | cut -f1 -d:); do
   strip --strip-unneeded "$a" || true
 done
 
-# # Add yugabyte supported languages to localedef
-# languages=("en_US" "de_DE" "es_ES" "fr_FR" "it_IT" "ja_JP"
-#   "ko_KR" "pl_PL" "ru_RU" "sv_SE" "tr_TR" "zh_CN")
-# for lang in "${languages[@]}"; do
-#   localedef --quiet --force --inputfile="${lang}" --charmap=UTF-8 "${lang}.UTF-8"
-# done
+# Add yugabyte supported languages to localedef
+languages=("en_US" "de_DE" "es_ES" "fr_FR" "it_IT" "ja_JP"
+  "ko_KR" "pl_PL" "ru_RU" "sv_SE" "tr_TR" "zh_CN")
+for lang in "${languages[@]}"; do
+  localedef --quiet --force --inputfile="${lang}" --charmap=UTF-8 "${lang}.UTF-8"
+done
 
 # Link yugabyte bins to /usr/local/bin/
 for a in ysqlsh ycqlsh yugabyted yb-admin yb-tsi-cli; do
@@ -130,7 +140,8 @@ done
 # to all the components in the unpacked tar.gz, as well as an extra link to the log path for the
 # respective server
 shopt -s extglob
-mkdir "$YB_HOME"/{master,tserver}
+mkdir -p "$YB_HOME"/{master,tserver} \
+  $DATA_DIR/yb-data/{master,tserver}/logs
 # Link all YB pieces
 for dir in !(^ybc-*); do ln -s "$YB_HOME"/"$dir" "$YB_HOME"/master/"$dir"; done
 for dir in !(^ybc-*); do ln -s "$YB_HOME"/"$dir" "$YB_HOME"/tserver/"$dir"; done
@@ -138,7 +149,8 @@ for dir in !(^ybc-*); do ln -s "$YB_HOME"/"$dir" "$YB_HOME"/tserver/"$dir"; done
 ln -s $DATA_DIR/yb-data/master/logs "$YB_HOME"/master/logs
 ln -s $DATA_DIR/yb-data/tserver/logs "$YB_HOME"/tserver/logs
 
-mkdir "$YB_HOME"/controller
+mkdir -p "$YB_HOME"/controller \
+  $DATA_DIR/ybc-data/controller/logs
 # Find ybc-* directory
 YBC_DIR=$(find "$YB_HOME" -maxdepth 1 -type d -name 'ybc-*')
 # Link bin directory
@@ -199,8 +211,6 @@ mkdir -m 777 /tmp/yb-controller-tmp
 chown -R yugabyte:yugabyte "$YB_HOME"
 chown -R yugabyte:yugabyte "$DATA_DIR"
 msg_ok "Permissions set"
-
-# --advertise_address=$(get_current_ip) \
 
 tserver_flags="tmp_dir=$YB_HOME/var/tmp"
 enable_ysql_conn_mgr=true
@@ -271,6 +281,7 @@ ExecStart=/bin/bash -c '/usr/local/bin/yugabyted start --secure \
 --callhome=false'
 
 Environment="YB_HOME=$YB_HOME"
+Environment="DATA_DIR=$DATA_DIR"
 Environment="YB_MANAGED_DEVOPS_USE_PYTHON3=$YB_MANAGED_DEVOPS_USE_PYTHON3"
 Environment="YB_DEVOPS_USE_PYTHON3=$YB_DEVOPS_USE_PYTHON3"
 Environment="BOTO_PATH=$BOTO_PATH"
@@ -291,7 +302,7 @@ Restart=always
 WantedBy=multi-user.target
 EOF
 
-systemctl enable -q "${app}".service
+# systemctl enable -q "${app}".service
 # # Enable systemd service
 # systemctl enable -q --now "${app}".service
 
@@ -312,7 +323,10 @@ customize
 msg_info "Cleaning up"
 $STD dnf autoremove -y
 $STD dnf clean all
-rm -rf /usr/share/python3-wheels/*
-rm -rf ~/.cache
-rm -rf /var/cache/yum /var/cache/dnf
+# rm -rf /usr/share/python3-wheels/*
+rm -rf \
+  ~/.cache \
+  "$YB_HOME/.cache" \
+  /var/cache/yum \
+  /var/cache/dnf
 msg_ok "Cleaned"
