@@ -37,9 +37,9 @@ $STD dnf install -y \
   redhat-rpm-config \
   rsync \
   procps \
-  python3.12 \
-  python3.12-devel \
-  python3.12-pip \
+  python3.11 \
+  python3.11-devel \
+  python3.11-pip \
   sysstat \
   tcpdump \
   which \
@@ -61,9 +61,9 @@ else
 fi
 
 msg_info "Installing Python3 Dependencies"
-# Make sure python 3.12 is used when calling python or python3
-alternatives --install /usr/bin/python python /usr/bin/python3.12 99
-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.12 99
+# Make sure python 3.11 is used when calling python or python3
+alternatives --install /usr/bin/python python /usr/bin/python3.11 99
+alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 99
 # Install required packages globally
 $STD python3 -m pip install --upgrade pip --root-user-action=ignore
 $STD python3 -m pip install --upgrade lxml --root-user-action=ignore
@@ -106,14 +106,15 @@ EOF
 msg_ok "Set ENV variables"
 
 msg_info "Creating yugabyte user"
+mkdir -p "$YB_HOME"
 useradd --home-dir "$YB_HOME" \
   --uid 10001 \
+  --shell /sbin/nologin \
   yugabyte
 msg_ok "Created yugabyte user"
 
 msg_info "Setup ${APP}"
 # Create data dirs from ENV vars
-mkdir -p "$YB_HOME"/var/tmp
 mkdir -m 775 "$DATA_DIR"
 
 # Set working dir
@@ -243,7 +244,7 @@ cat <<EOF >/etc/security/limits.conf
 EOF
 msg_info "Set default ulimits"
 
-tserver_flags="tmp_dir=$YB_HOME/var/tmp"
+tserver_flags=""
 enable_ysql_conn_mgr=true
 durable_wal_write=true
 
