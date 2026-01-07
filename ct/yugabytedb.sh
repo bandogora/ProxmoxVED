@@ -130,14 +130,14 @@ for i in {1..10}; do
   fi
 done
 
-# Create a backup of the config file in the same directory and name it ${CTID}.config.backup,
+# Create a backup of the config file in the same directory and name it ${CTID}.conf.backup,
 # then update the original if any legacy keys are used.
 msg_info "Creating backup of /etc/pve/lxc/${CTID}.conf"
 lxc-update-config -c "/etc/pve/lxc/${CTID}.conf"
-if [ -f "/etc/pve/lxc/${CTID}.config.backup" ]; then
-  msg_ok "Created backup at /etc/pve/lxc/${CTID}.config.backup"
+if [ -f "/etc/pve/lxc/${CTID}.conf.backup" ]; then
+  msg_ok "Created backup at /etc/pve/lxc/${CTID}.conf.backup"
 else
-  msg_error "Failed to create backup /etc/pve/lxc/${CTID}.config.backup"
+  msg_error "Failed to create backup /etc/pve/lxc/${CTID}.conf.backup"
   exit 1
 fi
 
@@ -168,6 +168,9 @@ for i in {1..10}; do
     exit 1
   fi
 done
+
+# Remove backup
+rm "/etc/pve/lxc/${CTID}.conf.backup"
 
 # # Start and enable the service
 # msg_info "Starting ${app}.service"
