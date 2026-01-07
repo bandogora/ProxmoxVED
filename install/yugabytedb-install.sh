@@ -84,9 +84,8 @@ msg_ok "Installed Python3 Dependencies"
 msg_info "Creating yugabyte user"
 useradd --home-dir "$YB_HOME" \
   --uid 10001 \
-  --shell /sbin/nologin \
   --no-create-home \
-  --no-user-group yugabyte
+  --shell /sbin/nologin
 msg_ok "Created yugabyte user"
 
 msg_info "Setup ${APP}"
@@ -115,12 +114,12 @@ for a in $(find . -exec file {} \; | grep -i elf | cut -f1 -d:); do
   strip --strip-unneeded "$a" || true
 done
 
-# Add yugabyte supported languages to localedef
-languages=("en_US" "de_DE" "es_ES" "fr_FR" "it_IT" "ja_JP"
-  "ko_KR" "pl_PL" "ru_RU" "sv_SE" "tr_TR" "zh_CN")
-for lang in "${languages[@]}"; do
-  localedef --quiet --force --inputfile="${lang}" --charmap=UTF-8 "${lang}.UTF-8"
-done
+# # Add yugabyte supported languages to localedef
+# languages=("en_US" "de_DE" "es_ES" "fr_FR" "it_IT" "ja_JP"
+#   "ko_KR" "pl_PL" "ru_RU" "sv_SE" "tr_TR" "zh_CN")
+# for lang in "${languages[@]}"; do
+#   localedef --quiet --force --inputfile="${lang}" --charmap=UTF-8 "${lang}.UTF-8"
+# done
 
 # Link yugabyte bins to /usr/local/bin/
 for a in ysqlsh ycqlsh yugabyted yb-admin yb-tsi-cli; do
@@ -197,8 +196,8 @@ msg_ok "Installed gsutil"
 msg_info "Setting permissions"
 mkdir -m 777 /tmp/yb-port-locks
 mkdir -m 777 /tmp/yb-controller-tmp
-chown -R yugabyte "$YB_HOME"
-chown -R yugabyte "$DATA_DIR"
+chown -R yugabyte:yugabyte "$YB_HOME"
+chown -R yugabyte:yugabyte "$DATA_DIR"
 msg_ok "Permissions set"
 
 # --advertise_address=$(get_current_ip) \
