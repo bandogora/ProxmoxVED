@@ -44,8 +44,32 @@ $STD dnf install -y \
   tcpdump \
   which \
   binutils \
-  tar
+  tar \
+  chrony
 msg_ok "Installed Dependencies"
+
+msg_info "Restarting chronyd in container mode"
+# Start chronyd with the -x option to disable the control of the system clock
+sed -i 's/^\(OPTIONS=".*\)"/\1 -x"/' /etc/sysconfig/chronyd
+
+if systemctl restart chronyd; then
+  msg_ok "chronyd running correctly"
+else
+  msg_error "Failed to restart chronyd"
+  journalctl -xeu chronyd.service
+  exit 1
+fi
+
+msg_info "Installing Python3 Dependencies"
+# Make sure python 3.12 is used when calling python or python3
+alternatives --install /usr/bin/python python /usr/bin/python3.12 99
+alternatives --install /usr/bin/python3 python3 /usr/bin/python3.12 99
+# Install required packages globally
+$STD python3 -m pip install --upgrade pip --root-user-action=ignore
+$STD python3 -m pip install --upgrade lxml --root-user-action=ignore
+$STD python3 -m pip install --upgrade s3cmd --root-user-action=ignore
+$STD python3 -m pip install --upgrade psutil --root-user-action=ignore
+msg_ok "Installed Python3 Dependencies"
 
 msg_info "Setting ENV variables"
 DATA_DIR=/mnt/disk0
@@ -80,17 +104,6 @@ AZCOPY_JOB_PLAN_LOCATION=$AZCOPY_JOB_PLAN_LOCATION
 AZCOPY_LOG_LOCATION=$AZCOPY_LOG_LOCATION
 EOF
 msg_ok "Set ENV variables"
-
-msg_info "Installing Python3 Dependencies"
-# Make sure python 3.12 is used when calling python or python3
-alternatives --install /usr/bin/python python /usr/bin/python3.12 99
-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.12 99
-# Install required packages globally
-$STD python3 -m pip install --upgrade pip --root-user-action=ignore
-$STD python3 -m pip install --upgrade lxml --root-user-action=ignore
-$STD python3 -m pip install --upgrade s3cmd --root-user-action=ignore
-$STD python3 -m pip install --upgrade psutil --root-user-action=ignore
-msg_ok "Installed Python3 Dependencies"
 
 msg_info "Creating yugabyte user"
 useradd --home-dir "$YB_HOME" \

@@ -148,7 +148,7 @@ if [ -n "${var_lxc_prlimit_config[*]}" ]; then
 fi
 
 # Appends ,mountoptions=noatime to rootfs config if it's not already present
-sed -i '/^rootfs: local-lvm:vm-102-disk-0,size=128G/{/mountoptions=noatime/! s/$/,mountoptions=noatime/}' /etc/pve/lxc/"${CTID}".conf
+sed -i "/^rootfs: local-lvm:/{/mountoptions=noatime/! s/$/,mountoptions=noatime/}" /etc/pve/lxc/"${CTID}".conf
 
 # Set swap to 0
 sed -i -E 's/^(swap:[[:space:]]*)[0-9]+/\10/' /etc/pve/lxc/"${CTID}".conf
