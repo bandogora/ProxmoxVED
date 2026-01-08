@@ -2,7 +2,7 @@
 
 # Copyright (c) 2021-2026 community-scripts ORG
 # Author: Slaviša Arežina (tremor021)
-# License: MIT | https://github.com/bandogora/ProxmoxVED/raw/main/LICENSE
+# License: MIT | https://github.com/community-scripts/ProxmoxVED/raw/main/LICENSE
 # Source: https://github.com/fccview/cronmaster
 
 source /dev/stdin <<<"$FUNCTIONS_FILE_PATH"
@@ -49,7 +49,7 @@ EOF
   echo "CronMaster Credentials:"
   echo ""
   echo "Password: $AUTH_PASS"
-}>>~/cronmaster.creds
+} >>~/cronmaster.creds
 msg_ok "Setup CronMaster"
 
 msg_info "Creating Service"

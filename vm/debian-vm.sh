@@ -2,7 +2,7 @@
 
 # Copyright (c) 2021-2026 community-scripts ORG
 # Author: MickLesk (CanbiZ)
-# License: MIT | https://github.com/bandogora/ProxmoxVED/raw/main/LICENSE
+# License: MIT | https://github.com/community-scripts/ProxmoxVED/raw/main/LICENSE
 
 source /dev/stdin <<<$(curl -fsSL https://raw.githubusercontent.com/bandogora/ProxmoxVED/yugabytedb/misc/api.func)
 source <(curl -fsSL https://raw.githubusercontent.com/bandogora/ProxmoxVED/yugabytedb/misc/vm-core.func)

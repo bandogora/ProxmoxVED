@@ -1,7 +1,7 @@
 # Configuration & Defaults System - User Guide
 
 > **Complete Guide to App Defaults and User Defaults**
-> 
+>
 > *Learn how to configure, save, and reuse your installation settings*
 
 ---
@@ -91,7 +91,7 @@ When installing a container, settings are applied in this order:
 └─────────────────────────────────────┘
 ```
 
-**In Plain English**: 
+**In Plain English**:
 - If you set an environment variable → it wins
 - Otherwise, if you have app-specific defaults → use those
 - Otherwise, if you have user defaults → use those
@@ -716,8 +716,8 @@ EOF
 ### Need More Information?
 
 - 📖 [Main Documentation](../../docs/)
-- 🐛 [Report Issues](https://github.com/bandogora/ProxmoxVED/issues)
-- 💬 [Discussions](https://github.com/bandogora/ProxmoxVED/discussions)
+- 🐛 [Report Issues](https://github.com/community-scripts/ProxmoxVED/issues)
+- 💬 [Discussions](https://github.com/community-scripts/ProxmoxVED/discussions)
 
 ### Useful Commands
 

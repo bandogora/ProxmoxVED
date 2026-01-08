@@ -1,7 +1,7 @@
 
 # Community Scripts Contribution Guide
 
-## **Welcome to the communty-scripts Repository!** 
+## **Welcome to the communty-scripts Repository!**
 
 📜 These documents outline the essential coding standards for all our scripts and JSON files. Adhering to these standards ensures that our codebase remains consistent, readable, and maintainable. By following these guidelines, we can improve collaboration, reduce errors, and enhance the overall quality of our project.
 
@@ -40,27 +40,27 @@ Before contributing, please ensure that you have the following setup:
    - [Shell Format](https://marketplace.visualstudio.com/items?itemName=foxundermoon.shell-format)
 
 ### Important Notes
-- Use [AppName.sh](https://github.com/bandogora/ProxmoxVED/blob/main/.github/CONTRIBUTOR_AND_GUIDES/ct/AppName.sh) and [AppName-install.sh](https://github.com/bandogora/ProxmoxVED/blob/main/.github/CONTRIBUTOR_AND_GUIDES/install/AppName-install.sh) as templates when creating new scripts.
+- Use [AppName.sh](https://github.com/community-scripts/ProxmoxVED/blob/main/.github/CONTRIBUTOR_AND_GUIDES/ct/AppName.sh) and [AppName-install.sh](https://github.com/community-scripts/ProxmoxVED/blob/main/.github/CONTRIBUTOR_AND_GUIDES/install/AppName-install.sh) as templates when creating new scripts.
 
 ---
 
 # 🚀 The Application Script (ct/AppName.sh)
 
-- You can find all coding standards, as well as the structure for this file [here](https://github.com/bandogora/ProxmoxVED/blob/main/.github/CONTRIBUTOR_AND_GUIDES/ct/AppName.md).
+- You can find all coding standards, as well as the structure for this file [here](https://github.com/community-scripts/ProxmoxVED/blob/main/.github/CONTRIBUTOR_AND_GUIDES/ct/AppName.md).
 - These scripts are responsible for container creation, setting the necessary variables and handling the update of the application once installed.
 
 ---
 
 # 🛠 The Installation Script (install/AppName-install.sh)
 
-- You can find all coding standards, as well as the structure for this file [here](https://github.com/bandogora/ProxmoxVED/blob/main/.github/CONTRIBUTOR_AND_GUIDES/install/AppName-install.md).
+- You can find all coding standards, as well as the structure for this file [here](https://github.com/community-scripts/ProxmoxVED/blob/main/.github/CONTRIBUTOR_AND_GUIDES/install/AppName-install.md).
 - These scripts are responsible for the installation of the application.
 
 ---
 
 ## 🚀 Building Your Own Scripts
 
-Start with the [template script](https://github.com/bandogora/ProxmoxVED/blob/main/.github/CONTRIBUTOR_AND_GUIDES/install/AppName-install.sh)
+Start with the [template script](https://github.com/community-scripts/ProxmoxVED/blob/main/.github/CONTRIBUTOR_AND_GUIDES/install/AppName-install.sh)
 
 ---
 
@@ -69,7 +69,7 @@ Start with the [template script](https://github.com/bandogora/ProxmoxVED/blob/ma
 ### 1. Fork the repository
 Fork to your GitHub account
 
-### 2. Clone your fork on your local environment 
+### 2. Clone your fork on your local environment
 ```bash
 git clone https://github.com/yourUserName/ForkName
 ```
@@ -99,8 +99,6 @@ Open a Pull Request from your feature branch to the main repository branch. You 
 
 ## 📚 Pages
 
-- [CT Template: AppName.sh](https://github.com/bandogora/ProxmoxVED/blob/main/.github/CONTRIBUTOR_AND_GUIDES/ct/AppName.sh)
-- [Install Template: AppName-install.sh](https://github.com/bandogora/ProxmoxVED/blob/main/.github/CONTRIBUTOR_AND_GUIDES/install/AppName-install.sh)
-- [JSON Template: AppName.json](https://github.com/bandogora/ProxmoxVED/blob/main/.github/CONTRIBUTOR_AND_GUIDES/json/AppName.json)
-
-
+- [CT Template: AppName.sh](https://github.com/community-scripts/ProxmoxVED/blob/main/.github/CONTRIBUTOR_AND_GUIDES/ct/AppName.sh)
+- [Install Template: AppName-install.sh](https://github.com/community-scripts/ProxmoxVED/blob/main/.github/CONTRIBUTOR_AND_GUIDES/install/AppName-install.sh)
+- [JSON Template: AppName.json](https://github.com/community-scripts/ProxmoxVED/blob/main/.github/CONTRIBUTOR_AND_GUIDES/json/AppName.json)

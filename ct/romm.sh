@@ -3,7 +3,7 @@ source <(curl -s https://raw.githubusercontent.com/bandogora/ProxmoxVED/yugabyte
 # Copyright (c) 2021-2025 community-scripts ORG
 # Author: MickLesk (CanbiZ)
 # Co-author: AlphaLawless
-# License: MIT | https://github.com/bandogora/ProxmoxVED/raw/main/LICENSE
+# License: MIT | https://github.com/community-scripts/ProxmoxVED/raw/main/LICENSE
 # Source: https://romm.app
 
 APP="RomM"

@@ -2,7 +2,7 @@
 source <(curl -fsSL https://raw.githubusercontent.com/bandogora/ProxmoxVED/yugabytedb/misc/build.func)
 # Copyright (c) 2021-2025 community-scripts ORG
 # Author: cobalt (cobaltgit)
-# License: MIT | https://github.com/bandogora/ProxmoxVED/raw/main/LICENSE
+# License: MIT | https://github.com/community-scripts/ProxmoxVED/raw/main/LICENSE
 # Source: https://ntfy.sh/
 
 APP="Alpine-ntfy"

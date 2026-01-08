@@ -2,7 +2,7 @@
 
 # Copyright (c) 2021-2026 community-scripts ORG
 # Author: MickLesk (CanbiZ)
-# License: MIT | https://github.com/bandogora/ProxmoxVED/raw/main/LICENSE
+# License: MIT | https://github.com/community-scripts/ProxmoxVED/raw/main/LICENSE
 # Source:
 
 source /dev/stdin <<<"$FUNCTIONS_FILE_PATH"
@@ -15,9 +15,9 @@ update_os
 
 msg_info "Installing Dependencies"
 $STD apt-get install -y \
-    build-essential \
-    make \
-    git
+  build-essential \
+  make \
+  git
 msg_ok "Installed Dependencies"
 
 ## WIP - only protoype with git call

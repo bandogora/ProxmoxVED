@@ -2,7 +2,7 @@
 
 # Copyright (c) 2021-2026 community-scripts ORG
 # Author: cobalt (cobaltgit)
-# License: MIT | https://github.com/bandogora/ProxmoxVED/raw/main/LICENSE
+# License: MIT | https://github.com/community-scripts/ProxmoxVED/raw/main/LICENSE
 # Source: https://ntfy.sh/
 
 source /dev/stdin <<<"$FUNCTIONS_FILE_PATH"
@@ -23,4 +23,3 @@ msg_ok "Installed ntfy"
 
 motd_ssh
 customize
-

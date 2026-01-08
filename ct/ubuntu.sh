@@ -3,7 +3,7 @@ source <(curl -fsSL https://raw.githubusercontent.com/bandogora/ProxmoxVED/yugab
 # source <(curl -fsSL https://raw.githubusercontent.com/bandogora/ProxmoxVED/yugabytedb/misc/github.func)
 # Copyright (c) 2021-2025 tteck
 # Author: tteck (tteckster)
-# License: MIT | https://github.com/bandogora/ProxmoxVED/raw/main/LICENSE
+# License: MIT | https://github.com/community-scripts/ProxmoxVED/raw/main/LICENSE
 # Source: https://ubuntu.com/
 
 APP="Ubuntu"

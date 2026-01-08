@@ -2,7 +2,7 @@
 
 # Copyright (c) 2021-2026 community-scripts ORG
 # Author: MickLesk (CanbiZ)
-# License: MIT | https://github.com/bandogora/ProxmoxVED/raw/main/LICENSE
+# License: MIT | https://github.com/community-scripts/ProxmoxVED/raw/main/LICENSE
 # Source: https://github.com/Kanba-co/kanba
 
 source /dev/stdin <<<"$FUNCTIONS_FILE_PATH"
@@ -29,10 +29,10 @@ $STD sudo -u postgres psql -c "ALTER ROLE $DB_USER SET client_encoding TO 'utf8'
 $STD sudo -u postgres psql -c "ALTER ROLE $DB_USER SET default_transaction_isolation TO 'read committed';"
 $STD sudo -u postgres psql -c "ALTER ROLE $DB_USER SET timezone TO 'UTC';"
 {
-    echo "Kanba-Credentials"
-    echo "Kanba Database Name: $DB_NAME"
-    echo "Kanba Database User: $DB_USER"
-    echo "Kanba Database Password: $DB_PASS"
+  echo "Kanba-Credentials"
+  echo "Kanba Database Name: $DB_NAME"
+  echo "Kanba Database User: $DB_USER"
+  echo "Kanba Database Password: $DB_PASS"
 } >>~/kanba.creds
 msg_ok "Set up PostgreSQL Database"
 
