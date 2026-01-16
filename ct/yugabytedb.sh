@@ -35,7 +35,7 @@ var_unprivileged="${var_unprivileged:-1}"
 export YB_SERIES="v2025.2"
 
 # Set yugabyte's home directory
-export YB_HOME="/home/yugabyte"
+export YB_HOME="/opt/yugabyte"
 
 # Make available to install script
 export NSAPP
