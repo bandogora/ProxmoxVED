@@ -5,21 +5,6 @@
 # License: MIT | https://github.com/community-scripts/ProxmoxVED/raw/main/LICENSE
 # Source: https://www.yugabyte.com/yugabytedb/
 
-# This setup mainly follows the yugabyte-db Docker file:
-# https://github.com/yugabyte/yugabyte-db/blob/8e7706cc10db22bd421deaf4dce2ba7c196c9781/docker/images/yugabyte/Dockerfile
-# These are the main differences:
-#   - Almalinux 9 instead of 8
-#   - Use uv/venv instead of system python
-#   - Use chronyd in the container rather than at system level
-#   - Fixed ybc dir naming (required for ysql_conn_mgr)
-#   - Default data and temp dirs are under $YB_HOME to avoid permissions conflicts
-#   - packages-microsoft-prod.repo and google-cloud-sdk.repo added to /etc/yum.repos.d
-#     - RPM-GPG-KEY-Microsoft and RPM-GPG-KEY-Google-Cloud-SDK saved to /etc/pki/rpm-gpg
-#     - azcopy and gsutil are install from source so version isn't pinned (allow updates)
-#   - yugabytedb recommended ulimits set in /etc/security/limits.conf
-#   - Save ENV variables /etc/environment
-#   - Create a default service
-
 # Import Functions und Setup
 source /dev/stdin <<<"$FUNCTIONS_FILE_PATH"
 color
@@ -29,12 +14,92 @@ setting_up_container
 network_check
 update_os
 
-# Installing Dependencies with the 3 core dependencies (curl;sudo;mc)
+msg_info "Configuring environment"
+DATA_DIR="$YB_HOME/var/data"
+TEMP_DIR="$YB_HOME/var/tmp"
+BOTO_DIR="$YB_HOME/.boto"
+# The following ENV vars are set for the yugabyted process
+YB_MANAGED_DEVOPS_USE_PYTHON3=1
+YB_DEVOPS_USE_PYTHON3=1
+BOTO_PATH=$BOTO_DIR/config
+AZCOPY_JOB_PLAN_LOCATION=/tmp/azcopy/jobs-plan
+AZCOPY_LOG_LOCATION=/tmp/azcopy/logs
+
+# Save environment for users and update
+cat >/etc/environment <<EOF
+YB_SERIES=$YB_SERIES
+YB_HOME=$YB_HOME
+DATA_DIR=$DATA_DIR
+TEMP_DIR=$TEMP_DIR
+YB_MANAGED_DEVOPS_USE_PYTHON3=$YB_MANAGED_DEVOPS_USE_PYTHON3
+YB_DEVOPS_USE_PYTHON3=$YB_DEVOPS_USE_PYTHON3
+BOTO_PATH=$BOTO_PATH
+AZCOPY_JOB_PLAN_LOCATION=$AZCOPY_JOB_PLAN_LOCATION
+AZCOPY_LOG_LOCATION=$AZCOPY_LOG_LOCATION
+EOF
+
+# Create data dirs from ENV vars, required before creating venv
+mkdir -p "$YB_HOME" "$DATA_DIR" "$TEMP_DIR" "$BOTO_DIR"
+# Set working dir
+cd "$YB_HOME" || exit
+msg_ok "Configured environment"
+
+# Create unprivileged user to run DB, required before creating venv
+msg_info "Creating yugabyte user"
+useradd --home-dir "$YB_HOME" \
+  --uid 10001 \
+  --no-create-home \
+  --no-user-group \
+  --shell /sbin/nologin \
+  yugabyte
+# Make sure user has permission to create venv
+chown -R yugabyte "$YB_HOME" "$DATA_DIR" "$TEMP_DIR"
+msg_ok "Created yugabyte user"
+
+msg_info "Setting up Python virtual environment"
+PYTHON_VERSION=3.11 setup_uv
+# Create venv as yugabyte user to ensure correct permissions when sourcing later
+$STD sudo -u yugabyte uv venv --python 3.11 "$YB_HOME/.venv"
+source "$YB_HOME/.venv/bin/activate"
+# Install required packages
+$STD uv pip install --upgrade pip
+$STD uv pip install --upgrade lxml
+$STD uv pip install --upgrade s3cmd
+$STD uv pip install --upgrade psutil
+msg_ok "Setup Python virtual environment"
+
+# venv should be sourced before installing google-cloud-cli,
+# that's why we don't do this first
 msg_info "Installing Dependencies"
+# Add microsoft-prod repo for azcopy
+curl -fsSL -o /etc/pki/rpm-gpg/RPM-GPG-KEY-Microsoft https://packages.microsoft.com/keys/microsoft.asc
+sudo tee -a /etc/yum.repos.d/packages-microsoft-prod.repo <<EOM
+[packages-microsoft-com-prod]
+name=Microsoft Production
+baseurl=https://packages.microsoft.com/alma/9/prod/
+enabled=1
+gpgcheck=1
+repo_gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-Microsoft
+sslverify=1
+EOM
+
+# Add cloud.google repo for gsutil, supplied by google-cloud-cli
+curl -fsSL -o /etc/pki/rpm-gpg/RPM-GPG-KEY-Google-Cloud-SDK https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+sudo tee -a /etc/yum.repos.d/google-cloud-sdk.repo <<EOM
+[google-cloud-cli]
+name=Google Cloud CLI
+baseurl=https://packages.cloud.google.com/yum/repos/cloud-sdk-el9-x86_64
+enabled=1
+gpgcheck=1
+repo_gpgcheck=0
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-Google-Cloud-SDK
+sslverify=1
+EOM
+
+# Update to source added repos
+$STD dnf upgrade -y
 $STD dnf install -y \
-  curl \
-  sudo \
-  mc \
   file \
   jq \
   bind-utils \
@@ -57,9 +122,12 @@ $STD dnf install -y \
   which \
   binutils \
   tar \
-  chrony
+  chrony \
+  azcopy \
+  google-cloud-cli
 msg_ok "Installed Dependencies"
 
+# yugabyted will expect `chronyc sources` to succeed
 msg_info "Restarting chronyd in container mode"
 # Start chronyd with the -x option to disable the control of the system clock
 sed -i 's/^\(OPTIONS=".*\)"/\1 -x"/' /etc/sysconfig/chronyd
@@ -72,74 +140,25 @@ else
   exit 1
 fi
 
-msg_info "Setting ENV variables"
-DATA_DIR="$YB_HOME/var/data"
-TEMP_DIR="$YB_HOME/var/tmp"
-YB_MANAGED_DEVOPS_USE_PYTHON3=1
-YB_DEVOPS_USE_PYTHON3=1
-BOTO_PATH=$YB_HOME/.boto/config
-AZCOPY_JOB_PLAN_LOCATION=/tmp/azcopy/jobs-plan
-AZCOPY_LOG_LOCATION=/tmp/azcopy/logs
-
-cat >/etc/environment <<EOF
-YB_SERIES=$YB_SERIES
-YB_HOME=$YB_HOME
-DATA_DIR=$DATA_DIR
-TEMP_DIR=$TEMP_DIR
-YB_MANAGED_DEVOPS_USE_PYTHON3=$YB_MANAGED_DEVOPS_USE_PYTHON3
-YB_DEVOPS_USE_PYTHON3=$YB_DEVOPS_USE_PYTHON3
-BOTO_PATH=$BOTO_PATH
-AZCOPY_JOB_PLAN_LOCATION=$AZCOPY_JOB_PLAN_LOCATION
-AZCOPY_LOG_LOCATION=$AZCOPY_LOG_LOCATION
-EOF
-msg_ok "Set ENV variables"
-
-msg_info "Creating working dirs"
-# Create data dirs from ENV vars
-mkdir -p "$YB_HOME" "$DATA_DIR" "$TEMP_DIR"
-# Set working dir
-cd "$YB_HOME" || exit
-msg_ok "Created and set working dir"
-
-msg_info "Creating yugabyte user"
-useradd --home-dir "$YB_HOME" \
-  --uid 10001 \
-  --no-create-home \
-  --no-user-group \
-  --shell /sbin/nologin \
-  yugabyte
-chown -R yugabyte "$YB_HOME" "$DATA_DIR" "$TEMP_DIR"
-msg_ok "Created yugabyte user"
-
-msg_info "Installing uv and Python Dependencies"
-PYTHON_VERSION=3.11 setup_uv
-
-# Create venv
-$STD sudo -u yugabyte uv venv --python 3.11 "$YB_HOME/.venv"
-source "$YB_HOME/.venv/bin/activate"
-# Install required packages
-$STD uv pip install --upgrade pip
-$STD uv pip install --upgrade lxml
-$STD uv pip install --upgrade s3cmd
-$STD uv pip install --upgrade psutil
-msg_ok "Installed uv and Python Dependencies"
-
 msg_info "Setup ${APP}"
 # Get latest version and build number for our series
 read -r VERSION RELEASE < <(
   curl -fsSL https://github.com/yugabyte/yugabyte-db/raw/refs/heads/master/docs/data/currentVersions.json |
     jq -r ".dbVersions[] | select(.series == \"${YB_SERIES}\") | [.version, .appVersion] | @tsv"
 )
+# Download the corresponding tarball
 curl -OfsSL "https://software.yugabyte.com/releases/${VERSION}/yugabyte-${RELEASE}-linux-$(uname -m).tar.gz"
-
 tar -xzf "yugabyte-${RELEASE}-linux-$(uname -m).tar.gz" --strip 1
 rm -rf "yugabyte-${RELEASE}-linux-$(uname -m).tar.gz"
+
+# Extract share/ybc-*.tar.gz to get bins required for ysql_conn_mgr
 tar -xzf share/ybc-*.tar.gz
 rm -rf ybc-*/conf/
 # yugabyted expects yb-controller-server file in ybc/bin
 mv ybc-* ybc
 
 # Strip unneeded symbols from object files in $YB_HOME
+# This is a step taken from the official Dockerfile
 for a in $(find . -exec file {} \; | grep -i elf | cut -f1 -d:); do
   $STD strip --strip-unneeded "$a" || true
 done
@@ -148,8 +167,12 @@ done
 for a in ysqlsh ycqlsh yugabyted yb-admin yb-ts-cli; do
   ln -s "$YB_HOME/bin/$a" "/usr/local/bin/$a"
 done
+
+# Set BOTO config for YugabyteDB
+echo -e "[GSUtil]\nstate_dir=/tmp/gsutil" >"$BOTO_PATH"
 msg_ok "Setup ${APP}"
 
+# Make sure we supply required licensing
 msg_info "Copying licenses"
 ghr_url=https://raw.githubusercontent.com/yugabyte/yugabyte-db/master
 mkdir /licenses
@@ -159,46 +182,7 @@ curl -fsSL ${ghr_url}/licenses/POLYFORM-FREE-TRIAL-LICENSE-1.0.0.txt \
   -o /licenses/POLYFORM-FREE-TRIAL-LICENSE-1.0.0.txt
 msg_ok "Copied licenses"
 
-# Install azcopy to support Microsoft Azure integration
-msg_info "Installing azcopy"
-curl -fsSL -o /etc/pki/rpm-gpg/RPM-GPG-KEY-Microsoft https://packages.microsoft.com/keys/microsoft.asc
-sudo tee -a /etc/yum.repos.d/packages-microsoft-prod.repo <<EOM
-[packages-microsoft-com-prod]
-name=Microsoft Production
-baseurl=https://packages.microsoft.com/alma/9/prod/
-enabled=1
-gpgcheck=1
-repo_gpgcheck=1
-gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-Microsoft
-sslverify=1
-EOM
-$STD dnf upgrade -y
-$STD dnf install -y azcopy
-mkdir -m 777 /tmp/azcopy
-msg_ok "Installed azcopy"
-
-# Install gsutil to support Google Cloud Platform wintegration
-msg_info "Installing gsutil"
-curl -fsSL -o /etc/pki/rpm-gpg/RPM-GPG-KEY-Google-Cloud-SDK https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
-sudo tee -a /etc/yum.repos.d/google-cloud-sdk.repo <<EOM
-[google-cloud-cli]
-name=Google Cloud CLI
-baseurl=https://packages.cloud.google.com/yum/repos/cloud-sdk-el9-x86_64
-enabled=1
-gpgcheck=1
-repo_gpgcheck=0
-gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-Google-Cloud-SDK
-sslverify=1
-EOM
-$STD dnf upgrade -y
-$STD dnf install -y libxcrypt-compat.x86_64 google-cloud-cli
-
-# Configure gsutil
-mkdir "$YB_HOME"/.boto
-mkdir -m 777 /tmp/gsutil
-echo -e "[GSUtil]\nstate_dir=/tmp/gsutil" >"$YB_HOME"/.boto/config
-msg_ok "Installed gsutil"
-
+# Make sure ulimits match those required by YugabyteDB
 msg_info "Setting default ulimits in /etc/security/limits.conf"
 cat <<EOF >/etc/security/limits.conf
 *                -       core            unlimited
@@ -214,11 +198,12 @@ cat <<EOF >/etc/security/limits.conf
 *                -       nproc           12000
 *                -       locks           unlimited
 EOF
-msg_ok "Set default ulimits"
+msg_ok "Set default ulimits in /etc/security/limits.conf"
 
+# Append tmp_dir to TSERVER_FLAGS to make sure yugabyted user has permissions to access it
 TSERVER_FLAGS+="tmp_dir=$TEMP_DIR"
 
-# Creating Service
+# Create service file with user selected options, correct limits, ENV vars, etc.
 msg_info "Creating Service"
 cat <<EOF >/etc/systemd/system/"${NSAPP}.service"
 [Unit]
@@ -269,16 +254,13 @@ customize
 msg_info "Setting permissions"
 chown -R yugabyte "$YB_HOME" "$DATA_DIR" "$TEMP_DIR"
 chmod -R 755 "$YB_HOME" "$DATA_DIR" "$TEMP_DIR"
+# Make sure gsutil and azcopy tmp dirs exist and allow yugabyte user access
+mkdir -m 777 /tmp/gsutil /tmp/azcopy
 msg_ok "Permissions set"
 
 # Cleanup
-msg_info "Cleaning up"
-$STD dnf autoremove -y
-$STD dnf clean all
 $STD uv cache clean
 rm -rf \
   ~/.cache \
-  "$YB_HOME/.cache" \
-  /var/cache/yum \
-  /var/cache/dnf
-msg_ok "Cleaned"
+  "$YB_HOME/.cache"
+cleanup_lxc
