@@ -72,6 +72,7 @@ msg_ok "Setup Python virtual environment"
 # that's why we don't do this first
 msg_info "Installing Dependencies"
 # Add microsoft-prod repo for azcopy
+# packages.microsoft.com/alma/10/prod/ doesn't yet have azcopy
 curl -fsSL -o /etc/pki/rpm-gpg/RPM-GPG-KEY-Microsoft https://packages.microsoft.com/keys/microsoft.asc
 sudo tee -a /etc/yum.repos.d/packages-microsoft-prod.repo <<EOM
 [packages-microsoft-com-prod]
@@ -85,11 +86,11 @@ sslverify=1
 EOM
 
 # Add cloud.google repo for gsutil, supplied by google-cloud-cli
-curl -fsSL -o /etc/pki/rpm-gpg/RPM-GPG-KEY-Google-Cloud-SDK https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+curl -fsSL -o /etc/pki/rpm-gpg/RPM-GPG-KEY-Google-Cloud-SDK https://packages.cloud.google.com/yum/doc/rpm-package-key-v10.gpg
 sudo tee -a /etc/yum.repos.d/google-cloud-sdk.repo <<EOM
 [google-cloud-cli]
 name=Google Cloud CLI
-baseurl=https://packages.cloud.google.com/yum/repos/cloud-sdk-el9-x86_64
+baseurl=https://packages.cloud.google.com/yum/repos/cloud-sdk-el10-x86_64
 enabled=1
 gpgcheck=1
 repo_gpgcheck=0
@@ -101,13 +102,9 @@ EOM
 $STD dnf upgrade -y
 $STD dnf install -y \
   file \
-  jq \
   bind-utils \
   diffutils \
   gettext \
-  glibc-all-langpacks \
-  glibc-langpack-en \
-  glibc-locale-source \
   iotop \
   less \
   ncurses-devel \
@@ -116,7 +113,6 @@ $STD dnf install -y \
   openssl-devel \
   redhat-rpm-config \
   rsync \
-  procps \
   sysstat \
   tcpdump \
   which \
