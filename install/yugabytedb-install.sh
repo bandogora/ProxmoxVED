@@ -58,8 +58,9 @@ msg_ok "Created yugabyte user"
 
 msg_info "Setting up Python virtual environment"
 PYTHON_VERSION=3.11 setup_uv
+uv_location=$(which uv)
 # Create venv as yugabyte user to ensure correct permissions when sourcing later
-$STD sudo -u yugabyte uv venv --python 3.11 "$YB_HOME/.venv"
+$STD sudo -u yugabyte "$uv_location" venv --python 3.11 "$YB_HOME/.venv"
 source "$YB_HOME/.venv/bin/activate"
 # Install required packages
 $STD uv pip install --upgrade pip
@@ -115,9 +116,7 @@ $STD dnf install -y \
   rsync \
   sysstat \
   tcpdump \
-  which \
   binutils \
-  tar \
   chrony \
   azcopy \
   google-cloud-cli
