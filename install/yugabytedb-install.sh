@@ -176,22 +176,22 @@ curl -fsSL ${ghr_url}/licenses/POLYFORM-FREE-TRIAL-LICENSE-1.0.0.txt \
 msg_ok "Copied licenses"
 
 # Make sure ulimits match those required by YugabyteDB
-msg_info "Setting default ulimits in /etc/security/limits.conf"
-cat <<EOF >/etc/security/limits.conf
-*                -       core            unlimited
-*                -       data            unlimited
-*                -       fsize           unlimited
-*                -       sigpending      119934
-*                -       memlock         64
-*                -       rss             unlimited
-*                -       nofile          1048576
-*                -       msgqueue        819200
-*                -       stack           8192
-*                -       cpu             unlimited
-*                -       nproc           12000
-*                -       locks           unlimited
-EOF
-msg_ok "Set default ulimits in /etc/security/limits.conf"
+# msg_info "Setting default ulimits in /etc/security/limits.conf"
+# cat <<EOF >/etc/security/limits.conf
+# *                -       core            unlimited
+# *                -       data            unlimited
+# *                -       fsize           unlimited
+# *                -       sigpending      119934
+# *                -       memlock         64
+# *                -       rss             unlimited
+# *                -       nofile          1048576
+# *                -       msgqueue        819200
+# *                -       stack           8192
+# *                -       cpu             unlimited
+# *                -       nproc           12000
+# *                -       locks           unlimited
+# EOF
+# msg_ok "Set default ulimits in /etc/security/limits.conf"
 
 # Append tmp_dir to TSERVER_FLAGS to make sure yugabyted user has permissions to access it
 TSERVER_FLAGS+="tmp_dir=$TEMP_DIR"
@@ -227,9 +227,6 @@ Environment="AZCOPY_JOB_PLAN_LOCATION=$AZCOPY_JOB_PLAN_LOCATION"
 Environment="AZCOPY_LOG_LOCATION=$AZCOPY_LOG_LOCATION"
 WorkingDirectory=$YB_HOME
 TimeoutStartSec=30
-LimitCORE=infinity
-LimitNOFILE=1048576
-LimitNPROC=12000
 RestartSec=5
 PermissionsStartOnly=True
 User=yugabyte
