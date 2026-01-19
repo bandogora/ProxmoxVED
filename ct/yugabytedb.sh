@@ -40,21 +40,6 @@ export YB_HOME="/opt/yugabyte"
 # Make available to install script
 export NSAPP
 
-# prlimit settings for lxc config to match yugabyte requirements
-lxc_prlimit_config=(
-  "lxc.prlimit.core: unlimited"
-  "lxc.prlimit.data: unlimited"
-  "lxc.prlimit.fsize: unlimited"
-  "lxc.prlimit.sigpending: 119934"
-  "lxc.prlimit.memlock: 64"
-  "lxc.prlimit.rss: unlimited"
-  "lxc.prlimit.nofile: 1048576"
-  "lxc.prlimit.msgqueue: 819200"
-  "lxc.prlimit.cpu: unlimited"
-  "lxc.prlimit.nproc: 12000"
-  "lxc.prlimit.locks: unlimited"
-)
-
 header_info "$APP"
 variables
 color
@@ -300,70 +285,6 @@ tserver_flags:
 start
 config_yugabytedb
 build_container
-
-msg_info "Stopping $CTID to apply config changes"
-# Stop the container so ulimit changes can take effect
-pct stop "$CTID"
-for i in {1..10}; do
-  if pct status "$CTID" | grep -q "status: stopped"; then
-    msg_ok "Stopped LXC Container $CTID"
-    break
-  fi
-  sleep 1
-  if [ "$i" -eq 10 ]; then
-    msg_error "LXC Container $CTID did not reach stopped state"
-    exit 1
-  fi
-done
-
-# Create a backup of the config file in the same directory and name it ${CTID}.conf.backup,
-# then update the original if any legacy keys are used.
-msg_info "Creating backup of /etc/pve/lxc/${CTID}.conf"
-lxc-update-config -c "/etc/pve/lxc/${CTID}.conf"
-if [ -f "/etc/pve/lxc/${CTID}.conf.backup" ]; then
-  msg_ok "Created backup at /etc/pve/lxc/${CTID}.conf.backup"
-else
-  msg_error "Failed to create backup /etc/pve/lxc/${CTID}.conf.backup"
-  exit 1
-fi
-
-msg_info "Updating $CTID config to match YugabyteDB guidelines"
-# Append prlimit lxc config options to conf file
-if [ -n "${lxc_prlimit_config[*]}" ]; then
-  printf "%s\n" "${lxc_prlimit_config[@]}" >>"/etc/pve/lxc/${CTID}.conf"
-fi
-
-# Appends ,mountoptions=noatime to rootfs config if it's not already present
-sed -i "/^rootfs: local-lvm:/{/mountoptions=noatime/! s/$/,mountoptions=noatime/}" /etc/pve/lxc/"${CTID}".conf
-
-# Set swap to 0
-sed -i -E 's/^(swap:[[:space:]]*)[0-9]+/\10/' /etc/pve/lxc/"${CTID}".conf
-msg_ok "Updated $CTID config"
-
-# Start the container
-msg_info "Starting $CTID"
-pct start "$CTID"
-for i in {1..10}; do
-  if pct status "$CTID" | grep -q "status: running"; then
-    msg_ok "Started LXC Container $CTID"
-    break
-  fi
-  sleep 1
-  if [ "$i" -eq 10 ]; then
-    msg_error "LXC Container $CTID did not reach running state"
-    exit 1
-  fi
-done
-
-# Remove backup
-msg_info "Removing backup /etc/pve/lxc/${CTID}.conf.backup"
-rm "/etc/pve/lxc/${CTID}.conf.backup"
-msg_ok "Removed backup /etc/pve/lxc/${CTID}.conf.backup"
-
-msg_info "Enable ${NSAPP}.service"
-pct exec "$CTID" -- systemctl enable --quiet "${NSAPP}".service
-msg_ok "Enabled ${NSAPP}.service"
-
 description
 
 msg_ok "Completed Successfully!\n"
