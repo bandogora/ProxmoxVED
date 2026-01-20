@@ -57,31 +57,7 @@ $STD uv pip install --upgrade s3cmd
 $STD uv pip install --upgrade psutil
 msg_ok "Setup Python virtual environment"
 
-# venv should be sourced before installing google-cloud-cli,
-# that's why we don't do this first
 msg_info "Installing Dependencies"
-# Add microsoft-prod repo for azcopy
-setup_deb822_repo \
-  "microsoft-prod" \
-  "https://packages.microsoft.com/keys/microsoft.asc" \
-  "https://packages.microsoft.com/debian/12/prod/" \
-  "bookworm" \
-  "main" \
-  "amd64,arm64,armhf" \
-  "true"
-
-# Add cloud.google repo for gsutil, supplied by google-cloud-cli
-setup_deb822_repo \
-  "cloud.google" \
-  "https://packages.cloud.google.com/apt/doc/apt-key.gpg" \
-  "https://packages.cloud.google.com/apt/" \
-  "cloud-sdk" \
-  "main" \
-  "" \
-  "true"
-
-# Update to source added repos
-$STD apt update -y
 $STD apt install -y \
   file \
   diffutils \
@@ -100,11 +76,7 @@ $STD apt install -y \
   gnu-which \
   binutils \
   tar \
-  chrony \
-  apt-transport-https \
-  gnupg \
-  azcopy \
-  google-cloud-cli
+  chrony
 msg_ok "Installed Dependencies"
 
 # yugabyted will expect `chronyc sources` to succeed
@@ -148,6 +120,12 @@ done
 for a in ysqlsh ycqlsh yugabyted yb-admin yb-ts-cli; do
   ln -s "$YB_HOME/bin/$a" "/usr/local/bin/$a"
 done
+msg_ok "Setup ${APP}"
+
+msg_info "Setting permissions"
+chown -R yugabyte "$YB_HOME" "$DATA_DIR" "$TEMP_DIR"
+chmod -R 755 "$YB_HOME" "$DATA_DIR" "$TEMP_DIR"
+msg_ok "Permissions set"
 
 # Create service file with user selected options, correct limits, ENV vars, etc.
 msg_info "Creating Service"
@@ -180,17 +158,12 @@ Restart=always
 [Install]
 WantedBy=multi-user.target
 EOF
+
+systemctl enable --quiet "${NSAPP}".service
 msg_ok "Created Service"
 
 motd_ssh
 customize
-
-msg_info "Setting permissions"
-chown -R yugabyte "$YB_HOME" "$DATA_DIR" "$TEMP_DIR"
-chmod -R 755 "$YB_HOME" "$DATA_DIR" "$TEMP_DIR"
-# Make sure gsutil and azcopy tmp dirs exist and allow yugabyte user access
-mkdir -m 777 /tmp/gsutil /tmp/azcopy
-msg_ok "Permissions set"
 
 # Cleanup
 $STD uv cache clean
