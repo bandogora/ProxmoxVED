@@ -6,20 +6,7 @@
 # Source: https://www.yugabyte.com/yugabytedb/
 
 # shellcheck source=misc/build.func
-source <(curl -fsSL https://raw.githubusercontent.com/bandogora/ProxmoxVED/feature/yugabytedb/misc/build.func)
-# source <(curl -fsSL https://raw.githubusercontent.com/community-scripts/ProxmoxVED/main/misc/build.func)
-
-# ====================================================================================
-# YOU MUST SET THE CORRECT ULIMITS AND ENABLE TRANSPARENT HUGEPAGES ON YOUR SYSTEM
-# ====================================================================================
-#
-# https://docs.yugabyte.com/stable/deploy/manual-deployment/system-config/#set-ulimits
-#
-#  - XFS is the recommended filesystem.
-#  - ZFS and NFS are not currently supported.
-#  - SSDs (solid state disks) are required.
-#  - Do not use RAID across multiple disks.
-# ====================================================================================
+source <(curl -fsSL https://raw.githubusercontent.com/community-scripts/ProxmoxVED/main/misc/build.func)
 
 # App Default Values
 APP="YugabyteDB"

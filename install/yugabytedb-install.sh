@@ -157,7 +157,7 @@ Restart=always
 WantedBy=multi-user.target
 EOF
 
-systemctl enable --quiet --now "${NSAPP}".service
+systemctl enable --quiet "${NSAPP}".service
 msg_ok "Created Service"
 
 motd_ssh
