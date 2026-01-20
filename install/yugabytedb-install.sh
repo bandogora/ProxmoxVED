@@ -79,11 +79,11 @@ useradd --home-dir "$YB_HOME" \
 chown -R yugabyte "$YB_HOME" "$DATA_DIR" "$TEMP_DIR"
 msg_ok "Created yugabyte user"
 
-msg_info "Setting up Python virtual environment"
 PYTHON_VERSION=3.11 setup_uv
+
+msg_info "Setting up Python virtual environment"
 # Create venv as yugabyte user to ensure correct permissions when sourcing later
 $STD sudo -u yugabyte uv venv --python 3.11 "$YB_HOME/.venv"
-source "$YB_HOME/.venv/bin/activate"
 # Install required packages
 $STD uv pip install --upgrade pip
 $STD uv pip install --upgrade lxml
