@@ -18,13 +18,6 @@ update_os
 msg_info "Configuring environment"
 DATA_DIR="$YB_HOME/var/data"
 TEMP_DIR="$YB_HOME/var/tmp"
-BOTO_DIR="$YB_HOME/.boto"
-# The following ENV vars are set for the yugabyted process
-YB_MANAGED_DEVOPS_USE_PYTHON3=1
-YB_DEVOPS_USE_PYTHON3=1
-BOTO_PATH=$BOTO_DIR/config
-AZCOPY_JOB_PLAN_LOCATION=/tmp/azcopy/jobs-plan
-AZCOPY_LOG_LOCATION=/tmp/azcopy/logs
 
 # Save environment for users and update
 cat >/etc/environment <<EOF
@@ -32,15 +25,10 @@ YB_SERIES=$YB_SERIES
 YB_HOME=$YB_HOME
 DATA_DIR=$DATA_DIR
 TEMP_DIR=$TEMP_DIR
-YB_MANAGED_DEVOPS_USE_PYTHON3=$YB_MANAGED_DEVOPS_USE_PYTHON3
-YB_DEVOPS_USE_PYTHON3=$YB_DEVOPS_USE_PYTHON3
-BOTO_PATH=$BOTO_PATH
-AZCOPY_JOB_PLAN_LOCATION=$AZCOPY_JOB_PLAN_LOCATION
-AZCOPY_LOG_LOCATION=$AZCOPY_LOG_LOCATION
 EOF
 
 # Create data dirs from ENV vars, required before creating venv
-mkdir -p "$YB_HOME" "$DATA_DIR" "$TEMP_DIR" "$BOTO_DIR"
+mkdir -p "$YB_HOME" "$DATA_DIR" "$TEMP_DIR"
 # Set working dir
 cd "$YB_HOME" || exit
 msg_ok "Configured environment"
@@ -161,10 +149,6 @@ for a in ysqlsh ycqlsh yugabyted yb-admin yb-ts-cli; do
   ln -s "$YB_HOME/bin/$a" "/usr/local/bin/$a"
 done
 
-# Set BOTO config for YugabyteDB
-echo -e "[GSUtil]\nstate_dir=/tmp/gsutil" >"$BOTO_PATH"
-msg_ok "Setup ${APP}"
-
 # Append tmp_dir to TSERVER_FLAGS to make sure yugabyted user has permissions to access it
 TSERVER_FLAGS+="tmp_dir=$TEMP_DIR"
 
@@ -192,11 +176,6 @@ $JOIN_CLUSTER
 
 Environment="PATH=$YB_HOME/.venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 Environment="YB_HOME=$YB_HOME"
-Environment="YB_MANAGED_DEVOPS_USE_PYTHON3=$YB_MANAGED_DEVOPS_USE_PYTHON3"
-Environment="YB_DEVOPS_USE_PYTHON3=$YB_DEVOPS_USE_PYTHON3"
-Environment="BOTO_PATH=$BOTO_PATH"
-Environment="AZCOPY_JOB_PLAN_LOCATION=$AZCOPY_JOB_PLAN_LOCATION"
-Environment="AZCOPY_LOG_LOCATION=$AZCOPY_LOG_LOCATION"
 WorkingDirectory=$YB_HOME
 TimeoutStartSec=30
 RestartSec=5
