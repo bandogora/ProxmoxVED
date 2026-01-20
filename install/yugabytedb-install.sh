@@ -110,7 +110,7 @@ mv ybc-* ybc
 
 # Strip unneeded symbols from object files in $YB_HOME
 # This is a step taken from the official Dockerfile
-for a in $(find . -exec file {} \; | grep -i elf | cut -f1 -d:); do
+for a in $(find "$YB_HOME" -exec file {} + | grep ELF | cut -f1 -d:); do
   $STD strip --strip-unneeded "$a" || true
 done
 
