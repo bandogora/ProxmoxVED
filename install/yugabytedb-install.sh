@@ -149,9 +149,6 @@ for a in ysqlsh ycqlsh yugabyted yb-admin yb-ts-cli; do
   ln -s "$YB_HOME/bin/$a" "/usr/local/bin/$a"
 done
 
-# Append tmp_dir to TSERVER_FLAGS to make sure yugabyted user has permissions to access it
-TSERVER_FLAGS+="tmp_dir=$TEMP_DIR"
-
 # Create service file with user selected options, correct limits, ENV vars, etc.
 msg_info "Creating Service"
 cat <<EOF >/etc/systemd/system/"${NSAPP}.service"
@@ -165,14 +162,10 @@ Type=forking
 RestartForceExitStatus=SIGPIPE
 StartLimitInterval=0
 ExecStart=/usr/local/bin/yugabyted start --secure \
---backup_daemon=$BACKUP_DAEMON \
---fault_tolerance=$FAULT_TOLERANCE \
 --advertise_address=$(hostname -I | awk '{print $1}') \
---tserver_flags="$TSERVER_FLAGS" \
+--tserver_flags="tmp_dir=$TEMP_DIR" \
 --data_dir=$DATA_DIR \
---cloud_location=$CLOUD_LOCATION \
---callhome=false \
-$JOIN_CLUSTER
+--callhome=false
 
 Environment="PATH=$YB_HOME/.venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 Environment="YB_HOME=$YB_HOME"
