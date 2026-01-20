@@ -86,7 +86,7 @@ config_yugabytedb() {
   }
 
   local STEP=1
-  local MAX_STEP=7
+  local MAX_STEP=6
   while [ $STEP -le $MAX_STEP ]; do
     case $STEP in
     # ═══════════════════════════════════════════════════════════════════════════
@@ -205,28 +205,9 @@ config_yugabytedb() {
       ((STEP++))
       ;;
     # ═══════════════════════════════════════════════════════════════════════════
-    # STEP 5: Memory Defaults Optimized for YSQL
+    # STEP 5: Backup/Restore Daemon
     # ═══════════════════════════════════════════════════════════════════════════
     5)
-      if whiptail --backtitle "YugabyteDB Setup [Step $STEP/$MAX_STEP]" \
-        --title "Memory Defaults Optimized for YSQL" \
-        --defaultno \
-        --yesno "Do want to use memory defaults optimized for YSQL?\nSelect No to prioritize YCQL or if not using YSQL." 8 54; then
-        mem_opt_for_ysql=true
-      else
-        if [ $? -eq 1 ]; then
-          mem_opt_for_ysql=false
-        else
-          ((STEP--))
-          continue
-        fi
-      fi
-      ((STEP++))
-      ;;
-    # ═══════════════════════════════════════════════════════════════════════════
-    # STEP 6: Backup/Restore Daemon
-    # ═══════════════════════════════════════════════════════════════════════════
-    6)
       if whiptail --backtitle "YugabyteDB Setup [Step $STEP/$MAX_STEP]" \
         --title "Backup/Restore" \
         --yesno "Enable the backup/restore agent? (Enables yugabyted backup command)" 7 71; then
@@ -242,14 +223,13 @@ config_yugabytedb() {
       ((STEP++))
       ;;
     # ═══════════════════════════════════════════════════════════════════════════
-    # STEP 7: Confirmation
+    # STEP 6: Confirmation
     # ═══════════════════════════════════════════════════════════════════════════
-    7)
+    6)
       # Build summary
       TSERVER_FLAGS=""
       [[ "$single_zone" == true ]] && TSERVER_FLAGS+="durable_wal_write=true,"
       [[ "$enable_ysql_conn_mgr" == true ]] && TSERVER_FLAGS+="enable_ysql_conn_mgr=true,"
-      [[ "$mem_opt_for_ysql" == true ]] && TSERVER_FLAGS+="use_memory_defaults_optimized_for_ysql=true,"
 
       local join_cluster=$(
         [ -z "${JOIN_CLUSTER:-}" ] && printf 'false' || printf "true\n  %s" "cluster_ip: $cluster_ip"
@@ -276,7 +256,7 @@ tserver_flags:
       if whiptail --backtitle "YugabyteDB Setup [Step $STEP/$MAX_STEP]" \
         --title "CONFIRM SETTINGS" \
         --ok-button "OK" --cancel-button "Back" \
-        --yesno "$summary\n\nCreate ${APP} with these settings?" 25 80; then
+        --yesno "$summary\n\nCreate ${APP} with these settings?" 23 80; then
         ((STEP++))
       else
         ((STEP--))
