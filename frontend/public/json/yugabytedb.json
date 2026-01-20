@@ -4,7 +4,7 @@
   "categories": [
     8
   ],
-  "date_created": "2026-01-14",
+  "date_created": "2026-01-20",
   "type": "ct",
   "updateable": false,
   "privileged": false,
@@ -33,12 +33,12 @@
   },
   "notes": [
     {
-      "text": "You must set the correct ulimits and enable transparent hugepages on your system: https://docs.yugabyte.com/stable/deploy/manual-deployment/system-config/#set-ulimits",
+      "text": "Do not use RAID across multiple disks, ZFS and NFS are not currently supported.",
       "type": "warning"
     },
     {
-      "text": "Do not use RAID across multiple disks, ZFS and NFS are not currently supported.",
-      "type": "warning"
+      "text": "It's recommended set the correct ulimits and enable transparent hugepages on your system: https://docs.yugabyte.com/stable/deploy/manual-deployment/system-config/#set-ulimits",
+      "type": "info"
     },
     {
       "text": "XFS is the recommended filesystem, SSDs (solid state disks) are required.",

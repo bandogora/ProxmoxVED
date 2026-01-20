@@ -15,6 +15,40 @@ setting_up_container
 network_check
 update_os
 
+msg_info "Installing Dependencies"
+$STD apt install -y \
+  diffutils \
+  gettext \
+  iotop \
+  less \
+  libncurses-dev \
+  net-tools \
+  openssl \
+  libssl-dev \
+  rsync \
+  procps \
+  sysstat \
+  tcpdump \
+  binutils \
+  chrony \
+  locales-all
+msg_ok "Installed Dependencies"
+
+# yugabyted expects cmd `chronyc sources` to succeed
+msg_info "Restarting chronyd in container mode"
+# Start chronyd with the -x option to disable control of the system clock
+sed -i 's|^ExecStart=!/usr/sbin/chronyd|ExecStart=!/usr/sbin/chronyd -x|' \
+  /usr/lib/systemd/system/chrony.service
+
+systemctl daemon-reload
+if systemctl restart chronyd; then
+  msg_ok "chronyd running correctly"
+else
+  msg_error "Failed to restart chronyd"
+  journalctl -xeu chronyd.service
+  exit 1
+fi
+
 msg_info "Configuring environment"
 DATA_DIR="$YB_HOME/var/data"
 TEMP_DIR="$YB_HOME/var/tmp"
@@ -57,43 +91,7 @@ $STD uv pip install --upgrade s3cmd
 $STD uv pip install --upgrade psutil
 msg_ok "Setup Python virtual environment"
 
-msg_info "Installing Dependencies"
-$STD apt install -y \
-  file \
-  diffutils \
-  gettext \
-  locales-all \
-  iotop \
-  less \
-  libncurses-dev \
-  net-tools \
-  openssl \
-  libssl-dev \
-  rsync \
-  procps \
-  sysstat \
-  tcpdump \
-  gnu-which \
-  binutils \
-  tar \
-  chrony
-msg_ok "Installed Dependencies"
-
-# yugabyted will expect `chronyc sources` to succeed
-msg_info "Restarting chronyd in container mode"
-# Start chronyd with the -x option to disable control of the system clock
-sed -i 's|^ExecStart=!/usr/sbin/chronyd|ExecStart=!/usr/sbin/chronyd -x|' \
-  /usr/lib/systemd/system/chrony.service
-systemctl daemon-reload
-if systemctl restart chronyd; then
-  msg_ok "chronyd running correctly"
-else
-  msg_error "Failed to restart chronyd"
-  journalctl -xeu chronyd.service
-  exit 1
-fi
-
-msg_info "Setup ${APP}"
+msg_info "Setup ${APPLICATION}"
 # Get latest version and build number for our series
 read -r VERSION RELEASE < <(
   curl -fsSL https://github.com/yugabyte/yugabyte-db/raw/refs/heads/master/docs/data/currentVersions.json |
@@ -120,7 +118,7 @@ done
 for a in ysqlsh ycqlsh yugabyted yb-admin yb-ts-cli; do
   ln -s "$YB_HOME/bin/$a" "/usr/local/bin/$a"
 done
-msg_ok "Setup ${APP}"
+msg_ok "Setup ${APPLICATION}"
 
 msg_info "Setting permissions"
 chown -R yugabyte "$YB_HOME" "$DATA_DIR" "$TEMP_DIR"
@@ -159,7 +157,7 @@ Restart=always
 WantedBy=multi-user.target
 EOF
 
-systemctl enable --quiet "${NSAPP}".service
+systemctl enable --quiet --now "${NSAPP}".service
 msg_ok "Created Service"
 
 motd_ssh
@@ -167,7 +165,4 @@ customize
 
 # Cleanup
 $STD uv cache clean
-rm -rf \
-  ~/.cache \
-  "$YB_HOME/.cache"
 cleanup_lxc
