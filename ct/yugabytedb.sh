@@ -143,10 +143,10 @@ config_yugabytedb() {
           --title "Disable UI" \
           --yesno "Do you want to disable the UI of this node?" \
           7 47; then
-          DISABLE_UI=true
+          ENABLE_UI=false
         else
           if [ $? -eq 1 ]; then
-            DISABLE_UI=false
+            ENABLE_UI=true
           else
             continue
           fi
@@ -241,7 +241,7 @@ config_yugabytedb() {
     6)
       # Build summary
       TSERVER_FLAGS=""
-      DISABLE_UI="${DISABLE_UI:-false}"
+      ENABLE_UI="${ENABLE_UI:-true}"
       [[ "$single_zone" == true ]] && TSERVER_FLAGS+="durable_wal_write=true,"
       [[ "$enable_ysql_conn_mgr" == true ]] && TSERVER_FLAGS+="enable_ysql_conn_mgr=true,"
 
@@ -258,8 +258,8 @@ cloud_location:
 
 join_cluster: $join_cluster
 
-disable_ui:
-  $DISABLE_UI
+enable_ui:
+  $ENABLE_UI
 
 backup_daemon:
   $BACKUP_DAEMON
@@ -282,7 +282,7 @@ tserver_flags:
     esac
   done
 
-  export TSERVER_FLAGS CLOUD_LOCATION BACKUP_DAEMON FAULT_TOLERANCE JOIN_CLUSTER DISABLE_UI
+  export TSERVER_FLAGS CLOUD_LOCATION BACKUP_DAEMON FAULT_TOLERANCE JOIN_CLUSTER ENABLE_UI
 }
 
 function update_script() {
