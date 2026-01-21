@@ -211,6 +211,7 @@ Type=forking
 RestartForceExitStatus=SIGPIPE
 StartLimitInterval=0
 ExecStart=/usr/local/bin/yugabyted start --secure \
+--ui=$DISABLE_UI \
 --backup_daemon=$BACKUP_DAEMON \
 --fault_tolerance=$FAULT_TOLERANCE \
 --advertise_address=$(hostname -I | awk '{print $1}') \

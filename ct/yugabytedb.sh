@@ -119,7 +119,7 @@ config_yugabytedb() {
         whiptail --backtitle "YugabyteDB Setup [Step $STEP/$MAX_STEP]" \
           --title "Join Cluster" \
           --defaultno \
-          --yesno "Do want to join an existing cluster?" 7 40
+          --yesno "Do you want to join an existing cluster?" 7 44
       then
         # Get static IP
         local cluster_ip
@@ -138,6 +138,18 @@ config_yugabytedb() {
           fi
         else
           continue
+        fi
+        if whiptail --backtitle "YugabyteDB Setup [Step $STEP/$MAX_STEP]" \
+          --title "Disable UI" \
+          --yesno "Do you want to disable the UI of this node?" \
+          7 47; then
+          DISABLE_UI=true
+        else
+          if [ $? -eq 1 ]; then
+            DISABLE_UI=false
+          else
+            continue
+          fi
         fi
       else
         if [ $? -eq 1 ]; then
@@ -189,10 +201,11 @@ config_yugabytedb() {
     # STEP 4: YSQL Connection Manager
     # ═══════════════════════════════════════════════════════════════════════════
     4)
+      local enable_ysql_conn_mgr
       if whiptail --backtitle "YugabyteDB Setup [Step $STEP/$MAX_STEP]" \
         --title "YSQL Connection Manager" \
-        --yesno "Do want to use YSQL Connection Manager for connection pooling?\n  💡 Can take up to 200MB of RAM on each database node." \
-        8 66; then
+        --yesno "Do you want to use YSQL Connection Manager for connection pooling?\n  💡 Can take up to 200MB of RAM on each database node." \
+        8 70; then
         enable_ysql_conn_mgr=true
       else
         if [ $? -eq 1 ]; then
@@ -228,6 +241,7 @@ config_yugabytedb() {
     6)
       # Build summary
       TSERVER_FLAGS=""
+      DISABLE_UI="${DISABLE_UI:-false}"
       [[ "$single_zone" == true ]] && TSERVER_FLAGS+="durable_wal_write=true,"
       [[ "$enable_ysql_conn_mgr" == true ]] && TSERVER_FLAGS+="enable_ysql_conn_mgr=true,"
 
@@ -244,6 +258,9 @@ cloud_location:
 
 join_cluster: $join_cluster
 
+disable_ui:
+  $DISABLE_UI
+
 backup_daemon:
   $BACKUP_DAEMON
 
@@ -256,7 +273,7 @@ tserver_flags:
       if whiptail --backtitle "YugabyteDB Setup [Step $STEP/$MAX_STEP]" \
         --title "CONFIRM SETTINGS" \
         --ok-button "OK" --cancel-button "Back" \
-        --yesno "$summary\n\nCreate ${APP} with these settings?" 23 80; then
+        --yesno "$summary\n\nCreate ${APP} with these settings?" 26 80; then
         ((STEP++))
       else
         ((STEP--))
@@ -265,7 +282,7 @@ tserver_flags:
     esac
   done
 
-  export TSERVER_FLAGS CLOUD_LOCATION BACKUP_DAEMON FAULT_TOLERANCE JOIN_CLUSTER
+  export TSERVER_FLAGS CLOUD_LOCATION BACKUP_DAEMON FAULT_TOLERANCE JOIN_CLUSTER DISABLE_UI
 }
 
 function update_script() {
