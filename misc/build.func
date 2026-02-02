@@ -3539,7 +3539,7 @@ build_container() {
   fi
 
   # Print PCT_OPTIONS_STRING as multi-line string to PCT_OPTIONS
-  printf -v PCT_OPTIONS "%s\n" "${PCT_OPTIONS_STRING[@]}"
+  printf -v PCT_OPTIONS "%s \\\n" "${PCT_OPTIONS_STRING[@]}"
 
   # Export as string (this works, unlike arrays!)
   export PCT_OPTIONS
@@ -4881,8 +4881,7 @@ create_lxc_container() {
   # PCT_OPTIONS is now a string (exported from build_container)
   # Add rootfs if not already specified
   if [[ ! "$PCT_OPTIONS" =~ "--rootfs" ]]; then
-    PCT_OPTIONS="$PCT_OPTIONS
-  --rootfs $CONTAINER_STORAGE:${PCT_DISK_SIZE:-8}"
+    PCT_OPTIONS+=" --rootfs $CONTAINER_STORAGE:${PCT_DISK_SIZE:-8}"
   fi
 
   # Lock by template file (avoid concurrent template downloads/validation)
@@ -4923,13 +4922,13 @@ create_lxc_container() {
   if [[ ! -s "$TEMPLATE_PATH" || "$(stat -c%s "$TEMPLATE_PATH" 2>/dev/null || echo 0)" -lt 1000000 ]]; then
     msg_info "Template file missing or too small - downloading"
     rm -f "$TEMPLATE_PATH"
-    pveam download "$TEMPLATE_STORAGE" "$TEMPLATE" >/dev/null 2>&1
+    pveam download "$TEMPLATE_STORAGE $TEMPLATE" >/dev/null 2>&1
     msg_ok "Template downloaded"
   elif ! tar -tf "$TEMPLATE_PATH" &>/dev/null; then
     if [[ -n "$ONLINE_TEMPLATE" ]]; then
       msg_info "Template appears corrupted - re-downloading"
       rm -f "$TEMPLATE_PATH"
-      pveam download "$TEMPLATE_STORAGE" "$TEMPLATE" >/dev/null 2>&1
+      pveam download "$TEMPLATE_STORAGE $TEMPLATE" >/dev/null 2>&1
       msg_ok "Template re-downloaded"
     else
       msg_warn "Template appears corrupted, but no online version exists. Skipping re-download."
@@ -4943,19 +4942,19 @@ create_lxc_container() {
   msg_debug "Logfile: $LOGFILE"
 
   # First attempt (PCT_OPTIONS is a multi-line string, use it directly)
-  if ! pct create "$CTID" "${TEMPLATE_STORAGE}:vztmpl/${TEMPLATE}" "$PCT_OPTIONS" >"$LOGFILE" 2>&1; then
+  if ! pct create "$CTID ${TEMPLATE_STORAGE}:vztmpl/${TEMPLATE} $PCT_OPTIONS" >"$LOGFILE" 2>&1; then
     msg_debug "Container creation failed on ${TEMPLATE_STORAGE}. Checking error..."
 
     # Check if template issue - retry with fresh download
     if grep -qiE 'unable to open|corrupt|invalid' "$LOGFILE"; then
       msg_info "Template may be corrupted - re-downloading"
       rm -f "$TEMPLATE_PATH"
-      pveam download "$TEMPLATE_STORAGE" "$TEMPLATE" >/dev/null 2>&1
+      pveam download "$TEMPLATE_STORAGE $TEMPLATE" >/dev/null 2>&1
       msg_ok "Template re-downloaded"
     fi
 
     # Retry after repair
-    if ! pct create "$CTID" "${TEMPLATE_STORAGE}:vztmpl/${TEMPLATE}" "$PCT_OPTIONS" >>"$LOGFILE" 2>&1; then
+    if ! pct create "$CTID ${TEMPLATE_STORAGE}:vztmpl/${TEMPLATE} $PCT_OPTIONS" >>"$LOGFILE" 2>&1; then
       # Fallback to local storage if not already on local
       if [[ "$TEMPLATE_STORAGE" != "local" ]]; then
         msg_info "Retrying container creation with fallback to local storage"
@@ -4968,7 +4967,7 @@ create_lxc_container() {
         else
           msg_ok "Trying local storage fallback"
         fi
-        if ! pct create "$CTID" "local:vztmpl/${TEMPLATE}" "$PCT_OPTIONS" >>"$LOGFILE" 2>&1; then
+        if ! pct create "$CTID local:vztmpl/${TEMPLATE} $PCT_OPTIONS" >>"$LOGFILE" 2>&1; then
           # Local fallback also failed - check for LXC stack version issue
           if grep -qiE 'unsupported .* version' "$LOGFILE"; then
             echo
@@ -4992,7 +4991,7 @@ create_lxc_container() {
             msg_error "Container creation failed. See $LOGFILE"
             if whiptail --yesno "pct create failed.\nDo you want to enable verbose debug mode and view detailed logs?" 12 70; then
               set -x
-              pct create "$CTID" "local:vztmpl/${TEMPLATE}" "$PCT_OPTIONS" 2>&1 | tee -a "$LOGFILE"
+              pct create "$CTID local:vztmpl/${TEMPLATE} $PCT_OPTIONS" 2>&1 | tee -a "$LOGFILE"
               set +x
             fi
             exit 209
@@ -5024,7 +5023,7 @@ create_lxc_container() {
           msg_error "Container creation failed. See $LOGFILE"
           if whiptail --yesno "pct create failed.\nDo you want to enable verbose debug mode and view detailed logs?" 12 70; then
             set -x
-            pct create "$CTID" "local:vztmpl/${TEMPLATE}" "$PCT_OPTIONS" 2>&1 | tee -a "$LOGFILE"
+            pct create "$CTID local:vztmpl/${TEMPLATE} $PCT_OPTIONS" 2>&1 | tee -a "$LOGFILE"
             set +x
           fi
           exit 209
