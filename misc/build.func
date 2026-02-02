@@ -3491,63 +3491,58 @@ build_container() {
   # This tells install scripts whether to prompt for input or use defaults
   export MODE="${METHOD:-default}"
 
-  # Build PCT_OPTIONS as multi-line string
-  PCT_OPTIONS_STRING="  -hostname $HN"
-
-  # Only add -tags if TAGS is not empty
-  if [ -n "$TAGS" ]; then
-    PCT_OPTIONS_STRING="$PCT_OPTIONS_STRING
-  -tags $TAGS"
-  fi
+  # Build PCT_OPTIONS_STRING as string array
+  PCT_OPTIONS_STRING=(
+    "--hostname $HN"
+    "$NET_STRING"
+    "--cores $CORE_COUNT"
+    "--memory $RAM_SIZE"
+    "--unprivileged $CT_TYPE"
+    "--onboot 1"
+  )
 
   # Only add -features if FEATURES is not empty
   if [ -n "$FEATURES" ]; then
-    PCT_OPTIONS_STRING="  -features $FEATURES
-$PCT_OPTIONS_STRING"
+    PCT_OPTIONS_STRING+=("--features $FEATURES")
+  fi
+
+  # Only add -tags if TAGS is not empty
+  if [ -n "$TAGS" ]; then
+    PCT_OPTIONS_STRING+=("--tags $TAGS")
   fi
 
   # Add storage if specified
   if [ -n "$SD" ]; then
-    PCT_OPTIONS_STRING="$PCT_OPTIONS_STRING
-  $SD"
+    PCT_OPTIONS_STRING+=("$SD")
   fi
 
   # Add nameserver if specified
   if [ -n "$NS" ]; then
-    PCT_OPTIONS_STRING="$PCT_OPTIONS_STRING
-  $NS"
+    PCT_OPTIONS_STRING+=("$NS")
   fi
-
-  # Network configuration
-  PCT_OPTIONS_STRING="$PCT_OPTIONS_STRING
-  $NET_STRING
-  -onboot 1
-  -cores $CORE_COUNT
-  -memory $RAM_SIZE
-  -unprivileged $CT_TYPE"
 
   # Protection flag (if var_protection was set)
   if [ "${PROTECT_CT:-}" == "1" ] || [ "${PROTECT_CT:-}" == "yes" ]; then
-    PCT_OPTIONS_STRING="$PCT_OPTIONS_STRING
-  -protection 1"
+    PCT_OPTIONS_STRING+=("--protection 1")
   fi
 
   # Timezone (map Etc/* to "host" as pct doesn't accept them)
   if [ -n "${CT_TIMEZONE:-}" ]; then
     local _pct_timezone="$CT_TIMEZONE"
     [[ "$_pct_timezone" == Etc/* ]] && _pct_timezone="host"
-    PCT_OPTIONS_STRING="$PCT_OPTIONS_STRING
-  -timezone $_pct_timezone"
+    PCT_OPTIONS_STRING+=("--timezone $_pct_timezone")
   fi
 
   # Password (already formatted)
   if [ -n "$PW" ]; then
-    PCT_OPTIONS_STRING="$PCT_OPTIONS_STRING
-  $PW"
+    PCT_OPTIONS_STRING+=("$PW")
   fi
 
+  # Print PCT_OPTIONS_STRING as multi-line string to PCT_OPTIONS
+  printf -v PCT_OPTIONS "%s\n" "${PCT_OPTIONS_STRING[@]}"
+
   # Export as string (this works, unlike arrays!)
-  export PCT_OPTIONS="$PCT_OPTIONS_STRING"
+  export PCT_OPTIONS
   export TEMPLATE_STORAGE="${var_template_storage:-}"
   export CONTAINER_STORAGE="${var_container_storage:-}"
 
@@ -4885,9 +4880,9 @@ create_lxc_container() {
 
   # PCT_OPTIONS is now a string (exported from build_container)
   # Add rootfs if not already specified
-  if [[ ! "$PCT_OPTIONS" =~ "-rootfs" ]]; then
+  if [[ ! "$PCT_OPTIONS" =~ "--rootfs" ]]; then
     PCT_OPTIONS="$PCT_OPTIONS
-  -rootfs $CONTAINER_STORAGE:${PCT_DISK_SIZE:-8}"
+  --rootfs $CONTAINER_STORAGE:${PCT_DISK_SIZE:-8}"
   fi
 
   # Lock by template file (avoid concurrent template downloads/validation)
