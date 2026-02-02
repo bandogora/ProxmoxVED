@@ -84,20 +84,20 @@ variables() {
 }
 
 # shellcheck source=misc/api.func
-source <(curl -fsSL https://git.community-scripts.org/community-scripts/ProxmoxVED/raw/branch/main/misc/api.func)
+source <(curl -fsSL https://github.com/bandogora/ProxmoxVED/raw/refs/heads/testing/misc/api.func)
 
 if command -v curl >/dev/null 2>&1; then
   # shellcheck source=misc/core.func
-  source <(curl -fsSL https://git.community-scripts.org/community-scripts/ProxmoxVED/raw/branch/main/misc/core.func)
+  source <(curl -fsSL https://github.com/bandogora/ProxmoxVED/raw/refs/heads/testing/misc/core.func)
   # shellcheck source=misc/error_handler.func
-  source <(curl -fsSL https://git.community-scripts.org/community-scripts/ProxmoxVED/raw/branch/main/misc/error_handler.func)
+  source <(curl -fsSL https://github.com/bandogora/ProxmoxVED/raw/refs/heads/testing/misc/error_handler.func)
   load_functions
   catch_errors
 elif command -v wget >/dev/null 2>&1; then
   # shellcheck source=misc/core.func
-  source <(wget -qO- https://git.community-scripts.org/community-scripts/ProxmoxVED/raw/branch/main/misc/core.func)
+  source <(wget -qO- https://github.com/bandogora/ProxmoxVED/raw/refs/heads/testing/misc/core.func)
   # shellcheck source=misc/error_handler.func
-  source <(wget -qO- https://git.community-scripts.org/community-scripts/ProxmoxVED/raw/branch/main/misc/error_handler.func)
+  source <(wget -qO- https://github.com/bandogora/ProxmoxVED/raw/refs/heads/testing/misc/error_handler.func)
   load_functions
   catch_errors
 fi
@@ -3414,7 +3414,7 @@ configure_ssh_settings() {
 # ------------------------------------------------------------------------------
 start() {
   # shellcheck source=misc/tools.func
-  source <(curl -fsSL https://git.community-scripts.org/community-scripts/ProxmoxVED/raw/branch/main/misc/tools.func)
+  source <(curl -fsSL https://github.com/bandogora/ProxmoxVED/raw/refs/heads/testing/misc/tools.func)
   if command -v pveversion >/dev/null 2>&1; then
     install_script || return 0
     return 0
@@ -3544,9 +3544,9 @@ build_container() {
   TEMP_DIR=$(mktemp -d)
   pushd "$TEMP_DIR" >/dev/null
   if [ "$var_os" == "alpine" ]; then
-    FUNCTIONS_FILE_PATH="$(curl -fsSL https://git.community-scripts.org/community-scripts/ProxmoxVED/raw/branch/main/misc/alpine-install.func)"
+    FUNCTIONS_FILE_PATH="$(curl -fsSL https://github.com/bandogora/ProxmoxVED/raw/refs/heads/testing/misc/alpine-install.func)"
   else
-    FUNCTIONS_FILE_PATH="$(curl -fsSL https://git.community-scripts.org/community-scripts/ProxmoxVED/raw/branch/main/misc/install.func)"
+    FUNCTIONS_FILE_PATH="$(curl -fsSL https://github.com/bandogora/ProxmoxVED/raw/refs/heads/testing/misc/install.func)"
   fi
   export FUNCTIONS_FILE_PATH
 
@@ -4051,7 +4051,7 @@ EOF'
   set +Eeuo pipefail # Disable ALL error handling temporarily
   trap - ERR         # Remove ERR trap completely
 
-  lxc-attach -n "$CTID" -- bash -c "curl -fsSL https://git.community-scripts.org/community-scripts/ProxmoxVED/raw/branch/main/install/${var_install}.sh"
+  lxc-attach -n "$CTID" -- bash -c "curl -fsSL https://github.com/bandogora/ProxmoxVED/raw/refs/heads/testing/install/${var_install}.sh"
   local lxc_exit=$?
 
   set -Eeuo pipefail       # Re-enable error handling
@@ -4196,7 +4196,7 @@ EOF'
         if [[ "${DEV_MODE_MOTD:-false}" == "true" ]]; then
           echo -e "${TAB}${HOLD}${DGN}Setting up MOTD and SSH for debugging...${CL}"
           if pct exec "$CTID" -- bash -c "
-              source <(curl -fsSL https://git.community-scripts.org/community-scripts/ProxmoxVED/raw/branch/main/misc/install.func)
+              source <(curl -fsSL https://github.com/bandogora/ProxmoxVED/raw/refs/heads/testing/misc/install.func)
               declare -f motd_ssh >/dev/null 2>&1 && motd_ssh || true
             " >/dev/null 2>&1; then
             local ct_ip
@@ -5213,7 +5213,7 @@ description() {
     cat <<EOF
 <div align='center'>
   <a href='https://Helper-Scripts.com' target='_blank' rel='noopener noreferrer'>
-    <img src='https://git.community-scripts.org/community-scripts/ProxmoxVED/raw/branch/main/misc/images/logo-81x112.png' alt='Logo' style='width:81px;height:112px;'/>
+    <img src='https://github.com/bandogora/ProxmoxVED/raw/refs/heads/testing/misc/images/logo-81x112.png' alt='Logo' style='width:81px;height:112px;'/>
   </a>
 
   <h2 style='font-size: 24px; margin: 20px 0;'>${APP} LXC</h2>
