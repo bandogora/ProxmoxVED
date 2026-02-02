@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Copyright (c) 2021-2026 community-scripts ORG
-# License: MIT | https://git.community-scripts.org/community-scripts/ProxmoxVED/raw/branch/main/LICENSE
+# License: MIT | https://github.com/bandogora/ProxmoxVED/raw/refs/heads/lint-build-func/LICENSE
 
 # ==============================================================================
 # CORE FUNCTIONS - LXC CONTAINER UTILITIES
@@ -448,7 +448,7 @@ silent() {
   if [[ $rc -ne 0 ]]; then
     # Source explain_exit_code if needed
     if ! declare -f explain_exit_code >/dev/null 2>&1; then
-      source <(curl -fsSL https://git.community-scripts.org/community-scripts/ProxmoxVED/raw/branch/main/misc/error_handler.func)
+      source <(curl -fsSL https://github.com/bandogora/ProxmoxVED/raw/refs/heads/lint-build-func/misc/error_handler.func)
     fi
 
     local explanation
@@ -715,7 +715,7 @@ exit_script() {
 get_header() {
   local app_name=$(echo "${APP,,}" | tr -d ' ')
   local app_type=${APP_TYPE:-ct} # Default to 'ct' if not set
-  local header_url="https://git.community-scripts.org/community-scripts/ProxmoxVED/raw/branch/main/${app_type}/headers/${app_name}"
+  local header_url="https://github.com/bandogora/ProxmoxVED/raw/refs/heads/lint-build-func/${app_type}/headers/${app_name}"
   local local_header_path="/usr/local/community-scripts/headers/${app_type}/${app_name}"
 
   mkdir -p "$(dirname "$local_header_path")"
@@ -833,29 +833,29 @@ is_verbose_mode() {
 is_unattended() {
   # Primary: Check MODE variable (case-insensitive)
   local mode="${MODE:-${mode:-}}"
-  mode="${mode,,}"  # lowercase
+  mode="${mode,,}" # lowercase
 
   case "$mode" in
-    default|1)
+  default | 1)
+    return 0
+    ;;
+  mydefaults | userdefaults | 3)
+    return 0
+    ;;
+  appdefaults | 4)
+    return 0
+    ;;
+  advanced | 2)
+    # Advanced mode is interactive ONLY during wizard
+    # Inside container (install scripts), it should be unattended
+    # Check if we're inside a container (no pveversion command)
+    if ! command -v pveversion &>/dev/null; then
+      # We're inside the container - all values already collected
       return 0
-      ;;
-    mydefaults|userdefaults|3)
-      return 0
-      ;;
-    appdefaults|4)
-      return 0
-      ;;
-    advanced|2)
-      # Advanced mode is interactive ONLY during wizard
-      # Inside container (install scripts), it should be unattended
-      # Check if we're inside a container (no pveversion command)
-      if ! command -v pveversion &>/dev/null; then
-        # We're inside the container - all values already collected
-        return 0
-      fi
-      # On host during wizard - interactive
-      return 1
-      ;;
+    fi
+    # On host during wizard - interactive
+    return 1
+    ;;
   esac
 
   # Legacy fallbacks for compatibility
@@ -977,29 +977,29 @@ prompt_confirm() {
     # User provided input
     response="${response,,}" # lowercase
     case "$response" in
-      y|yes)
+    y | yes)
+      return 0
+      ;;
+    n | no)
+      return 1
+      ;;
+    "")
+      # Empty response, use default
+      if [[ "$default" == "y" ]]; then
         return 0
-        ;;
-      n|no)
+      else
         return 1
-        ;;
-      "")
-        # Empty response, use default
-        if [[ "$default" == "y" ]]; then
-          return 0
-        else
-          return 1
-        fi
-        ;;
-      *)
-        # Invalid input, use default
-        echo -e "${YW}Invalid response, using default: ${default}${CL}"
-        if [[ "$default" == "y" ]]; then
-          return 0
-        else
-          return 1
-        fi
-        ;;
+      fi
+      ;;
+    *)
+      # Invalid input, use default
+      echo -e "${YW}Invalid response, using default: ${default}${CL}"
+      if [[ "$default" == "y" ]]; then
+        return 0
+      else
+        return 1
+      fi
+      ;;
     esac
   else
     # Timeout occurred
