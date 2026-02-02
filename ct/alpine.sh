@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # source <(curl -fsSL https://git.community-scripts.org/community-scripts/ProxmoxVED/raw/branch/main/misc/build.func)
-source <(curl -fsSL https://github.com/bandogora/ProxmoxVED/raw/refs/heads/lint-build-func/misc/build.func)
+source <(curl -fsSL https://github.com/bandogora/ProxmoxVED/raw/refs/heads/testing/misc/build.func)
 
 # Copyright (c) 2021-2026 tteck
 # Author: tteck (tteckster)
