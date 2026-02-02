@@ -4948,7 +4948,7 @@ create_lxc_container() {
   msg_debug "Logfile: $LOGFILE"
 
   # First attempt (PCT_OPTIONS is a multi-line string, use it directly)
-  if ! pct create "$CTID" "${TEMPLATE_STORAGE}:vztmpl/${TEMPLATE}" "$PCT_OPTIONS" >"$LOGFILE" 2>&1; then
+  if ! pct create "$CTID" "${TEMPLATE_STORAGE}:vztmpl/${TEMPLATE}" "${PCT_OPTIONS[@]}" >>"$LOGFILE" 2>&1; then
     msg_debug "Container creation failed on ${TEMPLATE_STORAGE}. Checking error..."
 
     # Check if template issue - retry with fresh download
